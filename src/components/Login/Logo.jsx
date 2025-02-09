@@ -1,12 +1,12 @@
 import React from "react";
-import BetterCallBusiness from "../../assets/images/BetterCallBusiness.png";
+import BCB from "../../assets/images/BCB.png";
 
 
 const Logo = () =>{
     return(
         <div className="flex my-5">
             <div>
-                <img src={BetterCallBusiness} className="w-1/2" />
+                <img src={BCB} className="w-2/3" />
             </div>
         </div>
     )
