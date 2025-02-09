@@ -6,7 +6,7 @@ const Logo = () =>{
     return(
         <div className="flex my-5">
             <div>
-                <img src={BCB} className="w-2/3" />
+                <img src={BCB} className="w-1/2" />
             </div>
         </div>
     )
