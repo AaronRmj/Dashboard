@@ -15,14 +15,14 @@ const Sidebar = ({isSidebarOpen}) => {    //sidebar affiche les elements du menu
 
     //definition les elements de notre menu
     const menuItems = [
-        {label: "Dashboard", to: "/", icon: <AiOutlineDashboard /> },
+        {label: "Dashboard", to: "/Dashboard", icon: <AiOutlineDashboard /> },
         {label: "Manage Customers", to: "/Customers", icon: <IoPeopleOutline /> },
-        {label: "Manage Employees", to: "/", icon: <GrUserWorker /> },
-        {label: "Stock Suppliers", to: "/", icon: <CiBag1 /> },
-        {label: "Products stock", to: "/", icon:<MdProductionQuantityLimits /> },
-        {label: "Transaction History", to: "/", icon: <FaRegMoneyBill1 /> },
-        {label: "To-Do", to: "/", icon: <CiCalendarDate /> },
-        {label: "Inbox", to: "/", icon: <MdOutlineForwardToInbox /> },
+        {label: "Manage Employees", to: "/Employees", icon: <GrUserWorker /> },
+        {label: "Stock Suppliers", to: "/StockSuppliers", icon: <CiBag1 /> },
+        {label: "Products stock", to: "/ProductsStock", icon:<MdProductionQuantityLimits /> },
+        {label: "Transaction History", to: "/History", icon: <FaRegMoneyBill1 /> },
+        {label: "To-Do", to: "/Todo", icon: <CiCalendarDate /> },
+        {label: "Inbox", to: "/Inbox", icon: <MdOutlineForwardToInbox /> },
     ]
 
     return(

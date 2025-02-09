@@ -7,11 +7,15 @@ import CreateAccount from "./CreateAccount";
 import { CiUser } from "react-icons/ci";
 import { CiUnlock } from "react-icons/ci";
 import Illustration from "./Illustration";
+import { useNavigate } from "react-router-dom";
+
 
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
+
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -23,6 +27,7 @@ const LoginPage = () => {
         // Logique d'authentification
         alert(`Username: ${username}, Password: ${password}`);
         setError("");
+        navigate("/Dashboard");
     };
 
     return (
