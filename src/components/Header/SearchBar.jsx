@@ -13,7 +13,7 @@ const SearchBar = () =>{
     };
 
     return(
-        <div className="flex items-center w-full">
+        <div className="flex items-center w-full lg:ml-36">
             {/*icone de recherche*/}
             <button
                 onClick={toggleSearch}
@@ -27,11 +27,11 @@ const SearchBar = () =>{
                     <input
                     type="text"
                     placeholder="Search"
-                    className="border w-3/4 pl-7 rounded-full focus:outline-none"
+                    className="bg-gray-100 rounded-md focus:outline-none p-2 px-4 focus:ring-2 focus:ring-blue-500 w-full py-2 border-gray-300"
                     />
                 </div>
             )}
-        </div>
+        </div>  
     )
 }
 
