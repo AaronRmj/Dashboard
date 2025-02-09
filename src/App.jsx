@@ -23,7 +23,7 @@ function App() {
 // Composant pour inclure Header et Sidebar sur les pages connectées
 const Layout = ({ children }) => {
   return (
-    <div className="flex">
+    <div className="flex bg-gray-200">
       <Sidebar />
       <div className="flex-1">
         <Header />
