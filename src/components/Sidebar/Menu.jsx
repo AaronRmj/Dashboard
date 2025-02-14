@@ -6,7 +6,7 @@ const Menu = ({ menuItems }) =>{
     return(
         <ul>
             {menuItems.map((item, index) =>(
-                <li key={index} className="flex items-center space-x-4 p-3">
+                <li key={index} className="flex items-center space-x-5 p-5">
                     {item.icon}
                     <Link to={item.to} className="text-sm font-medium">
                         {item.label}    

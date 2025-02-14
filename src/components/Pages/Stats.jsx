@@ -3,7 +3,7 @@ import React from "react";
 
 const Stats = ({ Statistics }) =>{
     return(
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
             {Statistics.map((statistic, index) => (
                 <div
                     key={index}
