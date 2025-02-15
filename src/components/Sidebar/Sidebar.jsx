@@ -17,7 +17,7 @@ const Sidebar = ({isSidebarOpen}) => {    //sidebar affiche les elements du menu
     const menuItems = [
         {label: "Dashboard", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
         {label: "Manage Customers", to: "/Customers", icon: <IoPeopleOutline /> },
-        {label: "Manage Employees", to: "/Employees", icon: <RiTeamLine /> },
+        {label: "Team", to: "/Team", icon: <RiTeamLine /> },
         {label: "Stock Suppliers", to: "/StockSuppliers", icon: <CiBag1 /> },
         {label: "Products stock", to: "/ProductsStock", icon:<MdOutlineInventory /> },
         {label: "Transaction History", to: "/History", icon: <MdHistory /> },
