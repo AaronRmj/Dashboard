@@ -10,7 +10,7 @@ const DynamicInput = ({ icon: Icon, placeholder, type, value, onChange }) => {
                 placeholder={placeholder}
                 value={value}
                 onChange={onChange}
-                className="pl-7 p-[10px] border-1 w-full border-gray-300 focus:border-gray-400 rounded-lg focus:outline-0"
+                className="pl-7 p-[10px] border-1 w-3/4 border-gray-300 focus:border-gray-400 rounded-lg focus:outline-0"
             />
           
         </div>
