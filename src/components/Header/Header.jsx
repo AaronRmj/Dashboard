@@ -19,7 +19,7 @@ const toogleSidebar = () =>{
      <>
         <nav className="top-0 fixed w-full z-50 h-13 bg-white flex items-center border-blue-100 border-b">
            <div className="flex items-center space-x-2 px-3">
-               <CiMenuFries onClick={toogleSidebar} className="text-2xl lg:hidden"/>
+               <CiMenuFries onClick={toogleSidebar} className="text-2xl lg:hidden md:hidden"/>
                <MdSpaceDashboard/>
                <Link className="font-bold text-sm">ERP System</Link>
            </div>
