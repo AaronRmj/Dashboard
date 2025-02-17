@@ -18,8 +18,8 @@ const Dashboard = () =>{
 
     return(
         <div className="my-16 mx-5 h-screen">
-            <h1 className="text-3xl font-bold mb-3 lg:ml-60 ml-0">Dashboard</h1>
-            <div className="mx-auto lg:max-w-6xl lg:space-x-7 lg:ml-60">
+            <h1 className="text-3xl font-bold mb-3">Dashboard</h1>
+            <div className="mx-auto lg:space-x-7">
                 <Stats Statistics={Statistics} />
             </div>
         </div>

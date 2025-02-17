@@ -27,7 +27,7 @@ const LoginPage = () => {
         // Logique d'authentification
         alert(`Username: ${username}, Password: ${password}`);
         setError("");
-        navigate("/Dashboard");
+        navigate("/dashboard");
     };
 
     return (
