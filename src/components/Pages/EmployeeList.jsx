@@ -39,9 +39,9 @@ const EmployeeList = () =>{
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
-                            <div className="bg-white rounded-xl p-12 text-center space-y-4 h-60 ">
+                            <div className="bg-white rounded-xl p-12 text-center space-y-4 h-60 w-58">
                                 <h1 className="font-bold">{employee.name}</h1>
-                                <h1 className="text-gray-400 font-light text-xs">{employee.email}</h1>
+                                <h3 className="text-gray-400 font-light text-xs">{employee.email}</h3>
                                 <h1>{employee.phone}</h1>
                             </div>
                         </div>

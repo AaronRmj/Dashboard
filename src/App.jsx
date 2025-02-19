@@ -4,6 +4,7 @@ import LoginPage from './components/Login/LoginPage';
 import Dashboard from './components/Pages/Dashboard';
 import Layout from "./components/Layout/Layout";
 import EmployeeList from "./components/Pages/EmployeeList";
+import Customers from "./components/Pages/History";
 
 function App() {
       return(
@@ -13,6 +14,7 @@ function App() {
                 <Route path="/" element={<LoginPage/> } />
                 <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                 <Route path="/employeelist" element={<Layout><EmployeeList /></Layout>} />
+                <Route path="/customers" element={<Layout><Customers /></Layout>} />
             </Routes>
           </div>
         </Router>
