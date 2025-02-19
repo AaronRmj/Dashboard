@@ -35,7 +35,7 @@ const EmployeeList = () =>{
 
         return(
             <section>
-                <h1 className="font-bold px-4 text-xl">Team</h1>
+                <h1 className="font-bold px-4 text-2xl">Team</h1>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
