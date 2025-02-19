@@ -8,11 +8,13 @@ import EmployeeList from "./components/Pages/EmployeeList";
 function App() {
       return(
         <Router>
+          <div className="font-primary">
             <Routes>
                 <Route path="/" element={<LoginPage/> } />
                 <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                 <Route path="/employeelist" element={<Layout><EmployeeList /></Layout>} />
             </Routes>
+          </div>
         </Router>
       )     
 }
