@@ -32,7 +32,7 @@ const ProductsStock = () =>{
             {products.map(product => (      //enveloppena anaty section fona na expression logique aza
                 <div key={product.id} >
                     <img src={product.image} alt="pd-img" className="h-7" />
-                    <h1>{product.name}</h1>
+                    <h1>{product.title}</h1>
                     <h3>{product.category}</h3>
                     <p>{product.price}</p>
                 </div>
