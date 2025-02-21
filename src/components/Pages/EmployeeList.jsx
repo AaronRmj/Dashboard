@@ -5,6 +5,7 @@ const EmployeeList = () =>{
 
     //Initialisation de l'état local 'employees' avec un tableau vide
     const [employees, setEmployees] = useState([]); 
+    const [loading, setLoading] = useState(true);
     
     // Utilisation de useEffect pour récupérer les données après le montage du composant
     useEffect(() => {   
@@ -39,6 +40,9 @@ const EmployeeList = () =>{
             catch (error){
                 console.log('erreur lors de la recuperation des données', error);
             }
+            finally{
+                setLoading(false);
+            }
         }
 
         //appel de la fonction 
@@ -49,6 +53,12 @@ const EmployeeList = () =>{
         return(
             <section>
                 <h1 className="font-bold px-4 text-2xl">Team</h1>
+                {loading ? (
+                    <div className="flex justify-center items-center h-screen">
+                        <div className="h-16 w-16 inline-block rounded-full border-4 border-t-transparent border-gray-400 border-solid spinner-border animate-spin"></div>
+                    </div>
+                ) : (
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
@@ -69,9 +79,10 @@ const EmployeeList = () =>{
 
 
                 </div>
+                )
+            }
             </section>
+
         )
-
-}
-
-export default EmployeeList
+    }
+        export default EmployeeList;
