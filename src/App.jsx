@@ -9,6 +9,7 @@ import ProductsStock from "./components/Pages/ProductsStock";
 import StockSuppliers from "./components/Pages/StockSuppliers";
 import History from "./components/Pages/History";
 import Todo from "./components/Pages/Todo";
+import Inbox from "./components/Pages/Inbox";
 
 function App() {
       return(
@@ -23,6 +24,7 @@ function App() {
                 <Route path="/stocksuppliers" element={<Layout><StockSuppliers /></Layout>} />
                 <Route path="/history" element={<Layout><History /></Layout>} />
                 <Route path="/todo" element={<Layout><Todo /></Layout>} />
+                <Route path="/inbox" element={<Layout><Inbox /></Layout>} />
             </Routes>
           </div>
         </Router>

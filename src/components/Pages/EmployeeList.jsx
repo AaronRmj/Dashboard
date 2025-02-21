@@ -13,14 +13,27 @@ const EmployeeList = () =>{
         const fetchEmployees = async () => {
             try{
 
-                // Envoi d'une requête HTTP GET à l'API
-                const response = await fetch('https://jsonplaceholder.typicode.com/users');
-                
-                //analyse la réponse JSON pour obtenir les données des employés.
+                // Stockena anaty data ny données
+                const response = await fetch('https://dummyjson.com/users');    
                 const data = await response.json();
 
-                // Mise à jour de l'état 'employees' avec les données récupérées
-                setEmployees(data);  
+
+                //Stockena anaty imagesData ny sary
+                const imagesResponse = await fetch('https://randomuser.me/api/?results=30');
+                const imagesData = await imagesResponse.json();
+
+                //fusionner les données (images + data)
+                const employeesWithImages = data.users.map((employee,index) => ({
+                    //repeter les proprietes de employee qui sont: nom,age,salaire etc
+                    ...employee,    
+
+                     //ra tsisy le image dia image random no affichena
+                    image: imagesData.results[index]?.picture.large || "https://picsum.photos/150" 
+                }));
+
+                //MAJ etat
+                setEmployees(employeesWithImages);
+
             }
             // Gestion des erreurs potentielles
             catch (error){
@@ -36,13 +49,20 @@ const EmployeeList = () =>{
         return(
             <section>
                 <h1 className="font-bold px-4 text-2xl">Team</h1>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
-                            <div className="bg-white rounded-xl p-12 text-center space-y-4">
-                                <h1 className="font-bold">{employee.name}</h1>
-                                <h3 className="text-gray-400 font-light text-xs">{employee.email}</h3>
-                                <h1>{employee.phone}</h1>
+                            <div className="bg-white rounded-xl p-12 text-center min-h-[400px] space-y-2 overflow-hidden">
+                                <div className="flex justify-center">
+                                    <img src={employee.image} alt={employee.image} className="rounded-full" />
+                                </div>
+                                <h2 className="font-bold">{employee.firstName} {employee.lastName}</h2>
+                                <h3 className="text-gray-500 text-sm font-thin sm:text-xl"> {employee.company.title} </h3>
+                                <h4 className="text-xs sm:text-lg lg:text-sm ">Username: {employee.username} </h4>
+                                <h4 className="text-xs sm:text-lg lg:text-sm ">Password: {employee.password} </h4>
+                                <h4 className="text-xs sm:text-lg lg:text-sm "> {employee.address.address} </h4>
+                                <h4 className="text-xs sm:text-lg lg:text-sm "> {employee.phone} </h4>
+                                <h4 className="text-xs sm:text-lg lg:text-sm  text-gray-500"> {employee.email} </h4>
                             </div>
                         </div>
                     ))}

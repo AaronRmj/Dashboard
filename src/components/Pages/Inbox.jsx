@@ -1,12 +1,12 @@
 import React from "react";
 
-const Customers = () =>{
+const Inbox = () =>{
         return(
             <div className="flex justify-center items-center h-screen bg-gray-100">
-                <h1 className="text-3xl font-bold">Manage customers here</h1>
+                <h1 className="text-3xl font-bold">Discuss here</h1>
             </div>
         )
 }
 
 
-export default Customers;
+export default Inbox;
