@@ -62,8 +62,8 @@ const EmployeeList = () =>{
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
-                            <div className="bg-white rounded-xl p-12 text-center min-h-[400px] space-y-2 overflow-hidden">
-                                <div className="flex justify-center">
+                            <div className="bg-white rounded-xl p-12 h-[500px] text-center shadow-lg space-y-2 overflow-hidden">
+                                <div className="flex justify-center flex-1">
                                     <img src={employee.image} alt={employee.image} className="rounded-full" />
                                 </div>
                                 <h2 className="font-bold">{employee.firstName} {employee.lastName}</h2>
@@ -72,7 +72,7 @@ const EmployeeList = () =>{
                                 <h4 className="text-xs sm:text-lg lg:text-sm ">Password: {employee.password} </h4>
                                 <h4 className="text-xs sm:text-lg lg:text-sm "> {employee.address.address} </h4>
                                 <h4 className="text-xs sm:text-lg lg:text-sm "> {employee.phone} </h4>
-                                <h4 className="text-xs sm:text-lg lg:text-sm  text-gray-500"> {employee.email} </h4>
+                                <h4 className="text-xs sm:text-lg lg:text-sm  text-gray-500 mt-auto"> {employee.email} </h4>
                             </div>
                         </div>
                     ))}
