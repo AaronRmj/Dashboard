@@ -65,7 +65,7 @@ const ProductsStock = () =>{
             <section className="bg-white rounded-xl lg:m-5 p-4">
         <div className="hidden md:block overflow-hidden rounded-xl">
           <table className="w-full border-collapse border-gray-300">
-            <thead className="bg-gray-100">
+            <thead className="">
               <tr className=" text-left">
                             <th className="p-2">Product</th>
                             <th  className="p-2">Category</th>
