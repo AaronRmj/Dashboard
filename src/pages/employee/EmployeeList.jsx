@@ -6,7 +6,7 @@ const EmployeeList = () =>{
     //Initialisation de l'état local 'employees' avec un tableau vide
     const [employees, setEmployees] = useState([]); 
     const [loading, setLoading] = useState(true);
-    
+    const [error, setError] = useState();
     // Utilisation de useEffect pour récupérer les données après le montage du composant
     useEffect(() => {   
         
