@@ -62,7 +62,7 @@ const EmployeeList = () =>{
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                     {employees.map(employee => (
                         <div key={employee.id} className="p-4">
-                            <div className="bg-white rounded-xl p-12 h-[500px] text-center shadow-lg space-y-2 overflow-hidden">
+                            <div className="bg-white hover:-translate-y-3 duration-300 rounded-xl p-12 h-[500px] text-center shadow-lg space-y-2 overflow-hidden">
                                 <div className="flex justify-center flex-1">
                                     <img src={employee.image} alt={employee.image} className="rounded-full" />
                                 </div>
