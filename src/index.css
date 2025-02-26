@@ -1,6 +1,11 @@
+@font-face {
+    font-family: urba;
+    src: url("./assets/font/Urbanist-Regular.ttf");
+}
+
+
 @import "tailwindcss";
 
 @theme{
-    --font-primary: "Poppins", "serif";
-    --font-secondary: "Urbanist", "serif";
+    --font-urba: urba, "sans-serif";
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import BCB from "../../assets/images/BCB.png";
+import BCB from "../../../assets/images/BCB.png";
 
 
 const Logo = () =>{

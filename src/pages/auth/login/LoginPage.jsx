@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Logo from "./Logo";
-import DynamicInput from "./DynamicInput";
+import DynamicInput from "../../../components/ui/DynamicInput";
 import RememberMe from "./RememberMe";
 import ForgetPassword from "./ForgetPassword";
 import CreateAccount from "./CreateAccount";
@@ -74,7 +74,7 @@ const LoginPage = () => {
                         <CreateAccount />
                     </div>
                 </div>
-                <div className="h-full object-cover">
+                <div className="object-cover">
                     <Illustration />
                 </div>
                 

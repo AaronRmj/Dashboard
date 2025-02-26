@@ -2,8 +2,9 @@ import React from "react";
 
 const DynamicInput = ({ icon: Icon, placeholder, type, value, onChange }) => {
     return (
-        <div className="py-2 text-gray-500 text-sm rounded-md relative flex items-center">
-             {Icon && <Icon className="text-gray-500 mr-2 absolute pl-3 text-2xl     "/>} 
+        <div className="py-2 text-gray-700 text-sm rounded-md relative flex items-center">
+            {/* si icon existe alors ... */}
+            {Icon && <Icon className="text-gray-500 mr-2 absolute pl-3 text-2xl"/>} 
              
             <input      
                 type={type}

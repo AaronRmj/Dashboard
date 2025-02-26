@@ -3,7 +3,7 @@ import { CiMenuFries } from "react-icons/ci";
 import { MdSpaceDashboard } from "react-icons/md";
 import  SearchBar  from './SearchBar';
 import Status from './Status';
-import Sidebar from "../Sidebar/Sidebar";
+import Sidebar from "../sidebar/Sidebar";
 import { Link } from "react-router-dom";
 
 const Header = () =>{
