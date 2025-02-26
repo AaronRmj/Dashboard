@@ -17,7 +17,7 @@ function App() {
         <Router>
           <div className="font-urba">
             <Routes>
-                <Route path="/login" element={<LoginPage/> } />
+                <Route path="/" element={<LoginPage/> } />
                 <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                 <Route path="/employeelist" element={<Layout><EmployeeList /></Layout>} />
                 <Route path="/customers" element={<Layout><Customers /></Layout>} />
