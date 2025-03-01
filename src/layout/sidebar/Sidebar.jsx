@@ -26,7 +26,7 @@ const Sidebar = ({isSidebarOpen}) => {    //sidebar affiche les elements du menu
     ]
 
     return(
-        <div className={`fixed flex left-0 top-13 bg-white border-blue-100 border-r h-screen w-60 transform ${ isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        <div className={`fixed z-10 flex left-0 top-13 bg-white border-blue-100 border-r h-screen w-60 transform ${ isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         transition-transform duration-300 ease-in-out lg:translate-x-0 md:translate-x-0`}>
             <Menu menuItems={menuItems} />
         </div>

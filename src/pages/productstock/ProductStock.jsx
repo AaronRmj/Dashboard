@@ -89,7 +89,7 @@ const ProductsStock = () =>{
                                     {products.map((product, index) => (
                                         <tr className="space-y-5 border-b-1 border-gray-200">
                                         <td className="py-3 px-6 flex items-center gap-4 text-sm font-bold"><img src={product.image} className="h-12 w-12 mr-6" alt="pd-img" /> {product.title} </td>
-                                        <td className="text-gray-500 text-sm"> {product.category} </td>                                                <td className="text-blue-600 text-sm">  {product.price}$  </td>
+                                        <td className="text-gray-500 text-sm"> {product.category} </td><td className="text-blue-600 text-sm">  {product.price}$  </td>
                                         <td className="text-center">  {product.rating.count}  </td>
                                         <td className="md:flex justify-center space-x-2 cursor-pointer"><CiEdit className="text-gray-600 h-5 w-5"/><RiDeleteBin6Line className="h-5 w-5 text-red-500"/></td>
                                     </tr>
