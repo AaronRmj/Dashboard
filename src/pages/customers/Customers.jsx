@@ -22,7 +22,7 @@ const Customers = () =>{
             {!inVoice ? (
                 
                 //ra false ilay inVoice dia tsisy retour
-                <section className="mx-auto lg:max-w-md w-2xs h-screen flex items-center" onClick={handleInvoice}>
+                <section className="mx-auto space-x-6 lg:max-w-md w-2xs h-screen flex justify-between items-center" onClick={handleInvoice}>
                     <Button label="Create New Invoice"/>
                 </section>
             ) : (
