@@ -3,14 +3,6 @@ const cors = require('cors'); // Ajoutez cette ligne
 const express = require('express');// fonction ilay importena eto azo heritreretina hoe anonyme
 //db.sequelize.sync({alter : true}); // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
 
-app.use(cors()); // Ajoutez cette ligne pour activer CORS
-const corsOptions = {
-    origin: 'http://localhost:5173',
-    optionsSuccessStatus: 200
-  };
-  
-  app.use(cors(corsOptions));
-  
 
 
 try{
@@ -26,6 +18,7 @@ const errhandler = err => console.log("error : ", err);
 const app = express();
 const PORT = 8080;
 app.use(express.json()); // eny fa na fonction ara ilay express dia manana ny propriétés-any koa 💀
+app.use(cors()); // CORS permet l'interaction entre 2 serveurs locales
 
 app.listen(PORT, () => {
     console.log(`serveur au port ${PORT}`); // backtick eo amin'ny è kay no mampety ilay ${} 🤦‍♂️🤦‍♂️
