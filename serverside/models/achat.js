@@ -23,9 +23,9 @@ module.exports = function(sequelize, DataTypes) {
         key: 'IdProduit'
       }
     },
-    NumFournisseur: {
-     type: DataTypes.INTEGER,
-     allowNull: false
+    InfoFournisseur: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     sequelize,

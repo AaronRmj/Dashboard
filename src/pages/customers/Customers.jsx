@@ -37,18 +37,22 @@ const Customers = () =>{
                         <h1 className="text-2xl font-bold">Invoice #</h1>
                         <h3 className="font-bold mb-5">Details</h3>
                             <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <Label text="Bill From" placeholder="ex : senpai" />
+                                <Label text="Bill From" value="senpai" disabled />
                                 <Label text="Bill To" placeholder="ex: yamada" />
                             </div>
                             <Label text="Recipient Email" placeholder=" ex : senpai@gmail.com" />
-                            <Label text="Bill Title/Project Descriptions" placeholder="Project name" />
+                            <div className="">
+                                <label className="block text-gray-700 font-thin mb-1">Phone Number / Address</label>
+                                <Label placeholder="Enter customer number"/>
+                                <Label placeholder="Enter customer address"/>
+                            </div>
                             <label className="text-lg">Issued on </label> 
                             <input type="date"/>
                             <h1 className="my-5 font-bold">Invoice Item</h1>
                             <table className="my-10 flex-1">
                                 <thead>
                                     <tr className="text-left">
-                                        <th className="font-thin">Item Name</th>
+                                        <th className="font-thin">Reference</th>
                                         <th className="font-thin">Price</th>
                                         <th className="font-thin">Quantity</th>
                                         <th className="font-thin">Total Price</th>

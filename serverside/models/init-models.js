@@ -16,8 +16,8 @@ function initModels(sequelize) {
   var vente = _vente(sequelize, DataTypes);
   var fournisseur = _fournisseur(sequelize, DataTypes);
 
-  facture.belongsTo(client, { foreignKey: "InfoCLient"});
-  client.hasMany(facture, { foreignKey: "InfoCLient"});
+  facture.belongsTo(client, { foreignKey: "InfoClient"});
+  client.hasMany(facture, { foreignKey: "InfoClient"});
   vente.belongsTo(employe, { foreignKey: "NumEmploye"});
   employe.hasMany(vente, { foreignKey: "NumEmploye"});
   vente.belongsTo(facture, { foreignKey: "NumFacture"});
@@ -26,8 +26,8 @@ function initModels(sequelize) {
   produit.hasMany(achat, { foreignKey: "CodeProduit"});
   vente.belongsTo(produit, { foreignKey: "CodeProduit"});
   produit.hasMany(vente, { foreignKey: "CodeProduit"});
-  achat.belongsTo(fournisseur, {foreignKey :"NumFournisseur"});
-  fournisseur.hasMany(achat, {foreignKey : "NumFournisseur"});
+  achat.belongsTo(fournisseur, {foreignKey :"InfoFournisseur"});
+  fournisseur.hasMany(achat, {foreignKey : "InfoFournisseur"});
   
   return {
     achat,

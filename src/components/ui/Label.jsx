@@ -1,7 +1,7 @@
 import React from "react";
 import DynamicInput from "./DynamicInput";
 
-//tout ce que Label recoit comme props, cette props est passé a son child Dinput
+//tout ce que Label recoit comme props, cette props est passé a son child DynamicInput
 const Label = ({text, ...props}) =>{
     return(
         <div>
