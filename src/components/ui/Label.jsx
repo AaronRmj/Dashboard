@@ -15,6 +15,7 @@ const Label = ({
             <DynamicInput 
             placeholder={placeholder}
             value={value}
+            name={name}
             onChange={onChange}
             {...props} />
         </div>
