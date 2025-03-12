@@ -8,36 +8,28 @@ const ProductsStock = () =>{
         //initialisation etat product avec un tab vide
         const [products, setProducts] = useState([]);
         const [loading, setLoading] = useState(true);
-        const [error, setError] = useState();
         //useEffect synchronise components avec system externe (API izy eto)
         useEffect(() =>{
-            
-            const fetchProduct = async () =>{   //fetchProduct est une fonction asynchrone
-                try{
-                    //fetch des données
-                    const response = await fetch('https://fakestoreapi.com/products');
-                    
-                    //analyse du fichier json retourné
-                    const data = await response.json();
+        //alaina avany am backend ny liste produits existant
 
-                    //shorten productName to 15 characters or less
-                    const modifiedData = data.map((product) => ({
-                        ...product,
-                        title: product.title.length > 15 ? product.title.slice(0,15) + "..." : product.title
-                    }))
-                    
-                    //MAJ de l'etat
-                    setProducts(modifiedData);
+        const fetchProduits = async () =>{
+            try{
+                const response = await fetch("http://localhost:8080/Produit");
+                if (!response.ok) {
+                    throw new Error("Erreur lors de la recuperation des produits");
                 }
-                //intercepter les erreurs
-                catch (error) {
-                    console.log('recuperation des données impossible', error);
-                }
-                finally {
-                    setLoading(false);
-                }
+                const data = await response.json();
+                setProducts(data);
             }
-            fetchProduct();
+            catch (error) { 
+                console.log("Erreur lors de la recuperation des produits", error);
+            }
+            finally {
+                setLoading(false);  
+            } 
+        }
+
+        fetchProduits();
         }, [])
     
     return(   
@@ -53,16 +45,16 @@ const ProductsStock = () =>{
                     {/* Pour mobile design */}
                     <div className="block md:hidden">
                         {
-                            products.map((product , index) => (
-                                <div className="bg-white relative m-5 rounded-lg shadow-md flex space-x-7 items-center px-7 py-4">
-                                    <div className="">
+                            products.map((product) => (
+                                <div key={product.IdProduit} className="bg-white relative m-5 rounded-lg shadow-md flex space-x-7 items-center px-7 py-4">
+                                    {/* <div className="">
                                         <img src={product.image} alt="pd-img" className="h-16 w-16" />
-                                    </div>
+                                    </div> */}
                                     <div>
-                                        <h1 className="font-bold text-md"> {product.title} </h1>
+                                        <h1 className="font-bold text-md"> {product.Description} </h1>
                                         <h2 className="text-gray-500 text-sm"> {product.category} </h2>
-                                        <p className="text-blue-600 text-lg"> {product.price}$ </p>
-                                        <p className="text-sm">Count: {product.rating.count} </p>
+                                        <p className="text-blue-600 text-lg"> {product.PVunitaire}$ </p>
+                                        <p className="text-sm">Count: {product.Stock} </p>
                                     </div>
                                     <div className="space-y-2 absolute right-6">
                                         <CiEdit className="h-6 w-6"/>
@@ -88,9 +80,9 @@ const ProductsStock = () =>{
                                 <tbody className="">
                                     {products.map((product, index) => (
                                         <tr className="space-y-5 border-b-1 border-gray-200">
-                                        <td className="py-3 px-6 flex items-center gap-4 text-sm font-bold"><img src={product.image} className="h-12 w-12 mr-6" alt="pd-img" /> {product.title} </td>
-                                        <td className="text-gray-500 text-sm"> {product.category} </td><td className="text-blue-600 text-sm">  {product.price}$  </td>
-                                        <td className="text-center">  {product.rating.count}  </td>
+                                        <td className="py-3 px-6 flex items-center gap-4 text-sm font-bold"><img src={product.image} className="h-12 w-12 mr-6" alt="pd-img" /> {product.Description} </td>
+                                        <td className="text-gray-500 text-sm"> {product.category} </td><td className="text-blue-600 text-sm">  {product.PVunitaire}$  </td>
+                                        <td className="text-center">  {product.Stock}  </td>
                                         <td className="md:flex justify-center space-x-2 cursor-pointer"><CiEdit className="text-gray-600 h-5 w-5"/><RiDeleteBin6Line className="h-5 w-5 text-red-500"/></td>
                                     </tr>
                                     ))}
