@@ -23,8 +23,8 @@ module.exports = function(sequelize, DataTypes) {
         key: 'IdProduit'
       }
     },
-    NumFournisseur: {
-     type: DataTypes.INTEGER,
+    InfoFournisseur: {
+     type: DataTypes.STRING,
      allowNull: false
     }
   }, {
