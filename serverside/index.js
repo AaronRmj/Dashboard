@@ -1,9 +1,7 @@
 const db = require('./models/db');
-const cors = require('cors'); // Ajoutez cette ligne
-const express = require('express');// fonction ilay importena eto azo heritreretina hoe anonyme
+const express = require('express'); // fonction ilay importena eto azo heritreretina hoe anonyme
 //db.sequelize.sync({alter : true}); // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
-
-
+const cors = require('cors');
 
 try{
     db.sequelize.authenticate();
@@ -18,8 +16,7 @@ const errhandler = err => console.log("error : ", err);
 const app = express();
 const PORT = 8080;
 app.use(express.json()); // eny fa na fonction ara ilay express dia manana ny propriétés-any koa 💀
-app.use(cors()); // CORS permet l'interaction entre 2 serveurs locales
-
+app.use(cors());
 app.listen(PORT, () => {
     console.log(`serveur au port ${PORT}`); // backtick eo amin'ny è kay no mampety ilay ${} 🤦‍♂️🤦‍♂️
 })
@@ -40,7 +37,6 @@ app.get("/Clients", async (req, res) => {
 
 app.get("/Employe", async (req, res) => {
     const employe = await db.employe.findAll();
-    console.log("Employés récupérés :", employe); // Ajoute ceci pour voir les résultats dans le terminal
     res.status(200).json(employe);
 });
 
@@ -58,21 +54,41 @@ app.get("/Facture/:idFacture", async (req, res) =>{
 });
 
 app.post("/Vente", async (req, res) => {
-    for(prod in req.body){
-        const { Quantite, Date, CodeProduit, NumFacture, NumEmploye} = req.body[prod];
-        if(!Quantite || !Date || !CodeProduit || !NumFacture || !NumEmploye){
+    const { Tel } = req.body.Client;
+    const clientExists = await db.client.findOne({where :{Tel : Tel}}); // comparaison des données suivant le numero de tel sachant que la comparaison de l'id est impossible
+    let newFacture;
+
+    // l'objectif? créer une nouvelle facture pour regrouper les ventes ci-après 
+    if(!clientExists){ // si le client n'est pas encore dans la BD:
+        const { Nom, Adresse, Email } = req.body.Client;
+        const newClient = await db.client.create({ Nom, Adresse, Tel, Email }); // on ajoute le client
+        newFacture = await db.facture.create({InfoClient : newClient.IdClient}); //puis on crée la facture
+    }
+    else{
+        newFacture = await db.facture.create({InfoClient : clientExists.IdClient}); //de même 
+    }
+
+    /*const lastFactureId = await db.facture.findOne({order:[["id", "DESC"]]});
+    console.log(lastFactureId);*/
+    NumFacture = newFacture.IdFacture;
+    infoClient = newFacture.InfoClient; 
+    console.log(`facture numero ${NumFacture} générée pour le client N° ${infoClient}`);
+    
+    for(prod in req.body.Produits){
+        const { Quantite, Date, CodeProduit, NumEmploye} = req.body.Produits[prod]; // pas.prod car ici prod est une variable contenant la propriété et non une propriété (clé dynamique usable only with [])
+        if(!Quantite || !Date || !CodeProduit || !NumEmploye){
             return res.status(400).json({error : "un field manquant"});
         }
-        await db.vente.create({ Quantite, Date, CodeProduit, NumFacture, NumEmploye}).catch(errhandler);
+        await db.vente.create({ Quantite, Date, CodeProduit, NumFacture, NumEmploye}).catch(errhandler); //création de l'historique de vente pour UN type de produit
         const produit = await db.produit.findOne({where: {IdProduit : CodeProduit}}).catch(errhandler);
-        const updatedStock = produit.Stock - Quantite;
+        const updatedStock = produit.Stock - Quantite; // mise à jour du stock de ce type de produit après sa vente
         await db.produit.update({Stock : updatedStock}, {where : {IdProduit : CodeProduit}}).catch(errhandler);
     }
     res.sendStatus(201);
 });
 
 
-/*app.post("/Achat", async (req, res) => {
+app.post("/Achat", async (req, res) => {
     const {CodeProduit, Descri, Quantite, Date, Pachat, Pvente, NumFournisseur} = req.body;
     const listeProduit = await db.produit.findAll({attributes : ["Description"]}); 
 
@@ -92,4 +108,22 @@ app.post("/Vente", async (req, res) => {
     }
     res.sendStatus(201);
 
-});*/
+});
+
+app.post('/Achat', async () => {
+    const { NomEntreprise } = req.body; 
+    const fournisseurExists = await db.fournisseur.findOne({where : {NomEntreprise : NomEntreprise}});
+    
+    for(prod in req.body.Produits){
+        const { IdProduit, PVunitaire, PAunitaire, Quantite, Description} = req.body[prod];
+        const produitExists = await db.produit.findOne({ where : { Description : Description}});
+        if(!produitExists){
+            const newProduit = await db.produit.create({IdProduit, PVunitaire, PAunitaire, Stock : Quantite, Description})
+        } 
+        else{
+
+        }
+
+    }
+    
+})
