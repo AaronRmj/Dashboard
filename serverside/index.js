@@ -54,14 +54,14 @@ app.get("/Facture/:idFacture", async (req, res) =>{
 });
 
 app.post("/Vente", async (req, res) => {
-    const { Tel } = req.body.Client;
-    const clientExists = await db.client.findOne({where :{Tel : Tel}}); // comparaison des données suivant le numero de tel sachant que la comparaison de l'id est impossible
+    const { Telephone } = req.body.Client;
+    const clientExists = await db.client.findOne({where :{Tel : Telephone}}); // comparaison des données suivant le numero de tel sachant que la comparaison de l'id est impossible
     let newFacture;
 
     // l'objectif? créer une nouvelle facture pour regrouper les ventes ci-après 
     if(!clientExists){ // si le client n'est pas encore dans la BD:
         const { Nom, Adresse, Email } = req.body.Client;
-        const newClient = await db.client.create({ Nom, Adresse, Tel, Email }); // on ajoute le client
+        const newClient = await db.client.create({ Nom, Adresse, Tel : Telephone, Email }); // on ajoute le client
         newFacture = await db.facture.create({InfoClient : newClient.IdClient}); //puis on crée la facture
     }
     else{
@@ -88,7 +88,7 @@ app.post("/Vente", async (req, res) => {
 });
 
 
-app.post("/Achat", async (req, res) => {
+/*app.post("/Achat", async (req, res) => {
     const {CodeProduit, Descri, Quantite, Date, Pachat, Pvente, NumFournisseur} = req.body;
     const listeProduit = await db.produit.findAll({attributes : ["Description"]}); 
 
@@ -108,9 +108,9 @@ app.post("/Achat", async (req, res) => {
     }
     res.sendStatus(201);
 
-});
+});*/
 
-app.post('/Achat', async () => {
+/*app.post('/Achat', async () => {
     const { NomEntreprise } = req.body; 
     const fournisseurExists = await db.fournisseur.findOne({where : {NomEntreprise : NomEntreprise}});
     
@@ -126,4 +126,4 @@ app.post('/Achat', async () => {
 
     }
     
-})
+})*/

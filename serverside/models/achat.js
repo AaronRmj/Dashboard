@@ -24,8 +24,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     InfoFournisseur: {
-     type: DataTypes.STRING,
-     allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     sequelize,

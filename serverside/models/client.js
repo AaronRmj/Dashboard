@@ -9,18 +9,18 @@ module.exports = function(sequelize, DataTypes) {
     },
     Nom: {
       type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    Prenom: {
-      type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: false
     },
     Tel: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       unique: "Tel"
     },
     Adresse: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    Email: {
       type: DataTypes.STRING(50),
       allowNull: true
     }

@@ -7,7 +7,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       primaryKey: true
     },
-    InfoCLient: {
+    InfoClient: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
