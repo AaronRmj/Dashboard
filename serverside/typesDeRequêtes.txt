@@ -1,14 +1,17 @@
 Ventes:
 {
     "Client" :{
+
             "Nom": "Jean Martin" , 	 	
             "Tel": "0378649471", 	
             "Adresse": "Tsimbazaza",
             "Email": "martin@gmail.com" 	
+
     }, 
 
     "Produits" :{
         "prod1" : {
+
             "Quantite" : 3,
             "Date" : "2025-02-24",
             "CodeProduit" : 3,

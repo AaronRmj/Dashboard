@@ -1,6 +1,6 @@
 import React from "react";
 
-const DynamicInput = ({ icon: Icon, placeholder, type, value, onChange, inputClassName }) => {
+const DynamicInput = ({ icon: Icon, name, placeholder,disabled, type, value, onChange, inputClassName }) => {
     return (
         <div className="py-2 text-gray-700 text-md rounded-md relative flex items-center">
             {/* si icon existe alors ... */}
@@ -10,12 +10,15 @@ const DynamicInput = ({ icon: Icon, placeholder, type, value, onChange, inputCla
                 type={type}
                 placeholder={placeholder}
                 value={value}
+                name={name}
                 onChange={onChange}
                 className={`pl-7 ${inputClassName} p-[10px] border-1 w-3/4 border-gray-300 focus:border-gray-400 rounded-lg focus:outline-0`}
+                disabled={disabled}
             />
           
         </div>
     );
 };
+
 
 export default DynamicInput;
