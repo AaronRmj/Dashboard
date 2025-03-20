@@ -3,26 +3,49 @@ import {useState} from "react";
 import Button from "../../components/ui/Button";
 import { IoCloseOutline } from "react-icons/io5";
 import Label from "../../components/ui/Label";
-import useForm from "../../hooks/Useform";
+
 
 const Customers = () =>{
     const [inVoice, setInVoiceOpen] = useState(false);
 
-    //tsongaina anaty useFrom ny données, asina valeur par defaut useForm
-    //au lieu de useForm().formData
-    const {formData, handleChange, handleSubmit, errors } = useForm({
-        billFrom: "senpai",
-        billTo:"",
-        recipientEmail:"",
-        phoneNumber:"",
-        address:"",
-        issuedOn:"",
-        itemName: "",
-        price: "",
-        quantity: "",
-        totalPrice: "",
-    });
+    const [formData, setFormData] = useState({
+        Client:{
+            Nom:"",
+            Telephone:"",
+            Adresse:"",
+            Email:"",
+        },
+        Produit:{
+            Quantite:"",
+            Date:"",
+            CodeProduit:"",
+            NumEmploye:""   
+        },
+    })
+    
 
+
+    const handleChange = (e) =>{
+        const {name,value} = e.target;
+        setFormData((prev) =>{
+            // Si `name` est un des éléments dans le tableau, exécute ce bloc
+            if (["Nom","Adresse", "Email"].includes(name)){
+                return { ...prev, Client:{...prev.Client, [name]:value }};
+            }
+            
+            if (["Telephone"].includes(name)){
+                return {...prev, Client:{...prev.Client, [name]:parseInt(value,10) || 0}};
+            }
+
+            if (["Date"].includes(name)){
+                return{...prev, Produit:{...prev.Produit, [name]:value}}
+            }
+
+            if (["Quantite", "CodeProduit", "NumEmploye"].includes(name))
+                return { ...prev, Produit:{...prev.Produit, [name]:parseInt(value, 10) || 0 }};
+            return {...prev, [name]:value};
+        })
+    }
 
     const handleInvoice = () =>{
         setInVoiceOpen(true);
@@ -33,17 +56,30 @@ const Customers = () =>{
     }
 
     //refa alefa ilay formulaire
-    const onSubmit = (e) =>{
+    const onSubmit = async (e) =>{
         e.preventDefault();
-        //antsoina ilay handlesubmit miaraka am url
-        handleSubmit("http://localhost:8080/Vente")
-            .then((data) => {
-                console.log("facture crée avec succes", data);
-                setInVoiceOpen(false);
+        const test = JSON.stringify(formData);
+        console.log(test);
+        try{
+            const response = await fetch('http://localhost:8080/Vente',{
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+
             })
-            .catch((Error) =>{
-                console.error('erreur lors de la soumission', Error);
-            })
+            if (!response.ok) {
+                throw new Error("Erreur lors de la création de la facture");
+            }
+
+            const data = await response.json();
+            console.log("facture crée avec succes", data);
+            setInVoiceOpen(false);
+        }
+        catch (error) {
+            console.error("Erreur de la soumission",error);
+        }
     }
 
     return(
@@ -58,7 +94,7 @@ const Customers = () =>{
 
                 //ra true ilay inVoice ilay return formulaire
                 <section  className="p-3 overflow-hidden flex justify-center">
-                    <form className="bg-white p-7 lg:max-w-xl rounded-xl shadow-lg relative">
+                    <form onSubmit={onSubmit} className="bg-white p-7 lg:max-w-xl rounded-xl shadow-lg relative">
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-xl font-semibold">Create New Invoice</h2>
                             <IoCloseOutline className="text-2xl" onClick={closePopup} />
@@ -66,86 +102,86 @@ const Customers = () =>{
                         <h1 className="text-2xl font-bold">Invoice #</h1>
                         <h3 className="font-bold mb-5">Details</h3>
                             <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <Label text="Bill From" value={formData.billFrom} disabled />
+                                <Label text="Bill From"  disabled />
                                 <Label
                                  text="Bill To" 
                                  placeholder="ex: yamada"
-                                 value={formData.billTo}
-                                 //fatatra oe inona ilay vokitika
-                                 name="billTo"
-                                 onChange={handleChange}
+                                 name="Nom"
+                                 value={formData.Client.Nom}
+                                 onChange={handleChange}  
                                  />
                             </div>
                             <Label
                                 text="Recipient Email"
                                 placeholder=" ex : senpai@gmail.com"
-                                name="recipientEmail"
-                                value={formData.recipientEmail}
+                                name="Email"
+                                value={formData.Client.Email}
                                 onChange={handleChange}
                                 />
                             <div>
                                 <label className="block text-gray-700 font-thin mb-1">Phone Number / Address</label>
                                 <Label
                                     placeholder="Enter customer number"
-                                    value={formData.phoneNumber}
-                                    name="phoneNumber"
+                                    name="Telephone"
+                                    value={formData.Client.Telephone}
                                     onChange={handleChange}
+                                    
                                     />
                                     
                                 <Label placeholder="Enter customer address"
-                                    value={formData.address}
-                                    name="address"
-                                    onChange={handleChange}/>
+                                    name="Adresse"
+                                    value={formData.Client.Adresse}
+                                    onChange={handleChange}
+                                    />
                             </div>
                             <label className="text-lg">Issued on </label> 
-                            <input type="date"
-                                onChange={handleChange}
-                                value={formData.issuedOn}
-                                name="issuedOn"
-                            />
+                            {/* <input type="date"
+                                
+                            /> */}
                             <h1 className="my-5 font-bold">Invoice Item</h1>
                             <table className="my-10 flex-1">
                                 <thead>
                                     <tr className="text-left">
-                                        <th className="font-thin">Reference</th>
-                                        <th className="font-thin">Price</th>
+                                        <th className="font-thin">Code Produit</th>
+                                        <th className="font-thin">Date</th>
                                         <th className="font-thin">Quantity</th>
-                                        <th className="font-thin">Total Price</th>
+                                        <th className="font-thin">Num Employe</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="text-left">
                                         <td><Label
                                             inputClassName="border-none"
-                                            placeholder="Item Name"
-                                            name="itemName"
+                                            placeholder="Code Produit"
+                                            name="CodeProduit"
+                                            value={formData.Produit.CodeProduit}
                                             onChange={handleChange}
-                                            value={formData.itemName}      
                                             />
                                             
                                         </td>
                                         <td><Label 
                                             inputClassName="border-none"
-                                            placeholder="£20"
-                                            name="price"
+                                            placeholder="Date"
+                                            name="Date"
+                                            value={formData.Produit.Date}
                                             onChange={handleChange}
-                                            value={formData.price}
                                          />
                                          </td>
                                         <td><Label 
                                             inputClassName="border-none"
                                             placeholder="2"
-                                            name="quantity"
+                                            name="Quantite"
+                                            value={formData.Produit.Quantite}
                                             onChange={handleChange}
-                                            value={formData.quantity}
+                                                        
                                          />
                                          </td>
                                         <td><Label 
                                             inputClassName="border-none" 
-                                            placeholder="£40"
-                                            name="totalPrice"
+                                            placeholder="Numero"
+                                            name="NumEmploye"
+                                            value={formData.Produit.NumEmploye}
                                             onChange={handleChange}
-                                            value={formData.totalPrice}
                                         />
                                         </td>
                                     </tr>
