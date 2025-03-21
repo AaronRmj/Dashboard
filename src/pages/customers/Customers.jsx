@@ -89,7 +89,7 @@ const Customers = () =>{
     }
 
     return(
-        <section>
+        <section className="h-screen">
             {!inVoice ? (
                 
                 //ra false ilay inVoice dia tsisy retour
@@ -99,7 +99,7 @@ const Customers = () =>{
             ) : (
 
                 //ra true ilay inVoice ilay return formulaire
-                <section  className="p-3 overflow-hidden flex justify-center h-screen">
+                <section  className="p-3 overflow-hidden flex justify-center">
                     <form onSubmit={onSubmit} className="bg-white p-7 lg:max-w-xl rounded-xl shadow-lg relative">
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-xl font-semibold">Nouvelle facture</h2>
