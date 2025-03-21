@@ -54,38 +54,66 @@ app.get("/Facture/:idFacture", async (req, res) =>{
 });
 
 app.post("/Vente", async (req, res) => {
-    const { Telephone } = req.body.Client;
-    const clientExists = await db.client.findOne({where :{Tel : Telephone}}); // comparaison des données suivant le numero de tel sachant que la comparaison de l'id est impossible
-
-    let newFacture;
-
-    // l'objectif? créer une nouvelle facture pour regrouper les ventes ci-après 
-    if(!clientExists){ // si le client n'est pas encore dans la BD:
-        const { Nom, Adresse, Email } = req.body.Client;
-        const newClient = await db.client.create({ Nom, Adresse, Tel : Telephone, Email }); // on ajoute le client   
-        newFacture = await db.facture.create({InfoClient : newClient.IdClient}); //puis on crée la facture
-    }
-    else{
-        newFacture = await db.facture.create({InfoClient : clientExists.IdClient}); //de même 
-    }
-
-    /*const lastFactureId = await db.facture.findOne({order:[["id", "DESC"]]});
-    console.log(lastFactureId);*/
-    NumFacture = newFacture.IdFacture;
-    infoClient = newFacture.InfoClient; 
-    console.log(`facture numero ${NumFacture} générée pour le client N° ${infoClient}`);
-    
-    for(prod in req.body.Produits){
-        const { Quantite, Date, CodeProduit, NumEmploye} = req.body.Produits[prod]; // pas.prod car ici prod est une variable contenant la propriété et non une propriété (clé dynamique usable only with [])
-        if(!Quantite || !Date || !CodeProduit || !NumEmploye){
-            return res.status(400).json({error : "un field manquant"});
+    try {
+        // Validation des données
+        if (!req.body.Client || !req.body.Produits) {
+            return res.status(400).json({ error: "Données client ou produits manquantes" });
         }
-        await db.vente.create({ Quantite, Date, CodeProduit, NumFacture, NumEmploye}).catch(errhandler); //création de l'historique de vente pour UN type de produit
-        const produit = await db.produit.findOne({where: {IdProduit : CodeProduit}}).catch(errhandler);
-        const updatedStock = produit.Stock - Quantite; // mise à jour du stock de ce type de produit après sa vente
-        await db.produit.update({Stock : updatedStock}, {where : {IdProduit : CodeProduit}}).catch(errhandler);
+        if (!Array.isArray(req.body.Produits)) {
+            return res.status(400).json({ error: "Le champ 'Produits' doit être un tableau" });
+        }
+
+        // Gestion du client
+        const { Telephone } = req.body.Client;
+        const clientExists = await db.client.findOne({ where: { Tel: Telephone } });
+        let newFacture;
+
+        if (!clientExists) {
+            const { Nom, Adresse, Email } = req.body.Client;
+            const newClient = await db.client.create({ Nom, Adresse, Tel: Telephone, Email });
+            newFacture = await db.facture.create({ InfoClient: newClient.IdClient });
+        } else {
+            newFacture = await db.facture.create({ InfoClient: clientExists.IdClient });
+        }
+
+        // Gestion des produits
+        const NumFacture = newFacture.IdFacture;
+        for (const produit of req.body.Produits) {
+            const { Quantite, Date, CodeProduit, NumEmploye } = produit;
+
+            // Validation et conversion
+            const quantite = parseInt(Quantite, 10);
+            const codeProduit = parseInt(CodeProduit, 10);
+            const numEmploye = parseInt(NumEmploye, 10);
+            if (isNaN(quantite) || isNaN(codeProduit) || isNaN(numEmploye) || !Date) {
+                return res.status(400).json({ error: "Données de produit invalides" });
+            }
+
+            // Création de la vente
+            await db.vente.create({ 
+                Quantite: quantite, 
+                Date, 
+                CodeProduit: codeProduit, 
+                NumFacture, 
+                NumEmploye: numEmploye 
+            });
+
+            // Mise à jour du stock
+            const produitStock = await db.produit.findOne({ where: { IdProduit: codeProduit } });
+            if (!produitStock) {
+                return res.status(404).json({ error: "Produit introuvable" });
+            }
+            await db.produit.update(
+                { Stock: produitStock.Stock - quantite },
+                { where: { IdProduit: codeProduit } }
+            );
+        }
+
+        res.status(201).json({ message: "Facture créée avec succès", NumFacture });
+    } catch (error) {
+        console.error("Erreur globale :", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
     }
-    res.sendStatus(201);
 });
 
 

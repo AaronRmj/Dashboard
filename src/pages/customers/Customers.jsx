@@ -58,15 +58,19 @@ const Customers = () =>{
     //refa alefa ilay formulaire
     const onSubmit = async (e) =>{
         e.preventDefault();
-        const test = JSON.stringify(formData);
-        console.log(test);
+        
+        const dataToSend = {
+          Client: formData.Client,
+          Produits: [formData.Produit] //avadika tableau satria zay no raisin ny backend
+        }
+
         try{
             const response = await fetch('http://localhost:8080/Vente',{
                 method: "POST",
                 headers:{
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(dataToSend),
 
             })
             if (!response.ok) {
@@ -75,10 +79,12 @@ const Customers = () =>{
 
             const data = await response.json();
             console.log("facture crée avec succes", data);
+            alert("Facture crée avec succès!");
             setInVoiceOpen(false);
         }
         catch (error) {
             console.error("Erreur de la soumission",error);
+            alert('Echec de l\'envoie des données');
         }
     }
 
@@ -93,67 +99,65 @@ const Customers = () =>{
             ) : (
 
                 //ra true ilay inVoice ilay return formulaire
-                <section  className="p-3 overflow-hidden flex justify-center">
+                <section  className="p-3 overflow-hidden flex justify-center h-screen">
                     <form onSubmit={onSubmit} className="bg-white p-7 lg:max-w-xl rounded-xl shadow-lg relative">
                         <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-xl font-semibold">Create New Invoice</h2>
+                            <h2 className="text-xl font-semibold">Nouvelle facture</h2>
                             <IoCloseOutline className="text-2xl" onClick={closePopup} />
                         </div>
-                        <h1 className="text-2xl font-bold">Invoice #</h1>
-                        <h3 className="font-bold mb-5">Details</h3>
-                            <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <Label text="Bill From"  disabled />
+                        <h1 className="text-2xl font-bold">FACTURE #</h1>
+                        <h3 className="font-bold mb-5">Détails</h3>
+                            <div className="grid grid-cols-1">
                                 <Label
-                                 text="Bill To" 
-                                 placeholder="ex: yamada"
+                                 text="Nom du Client" 
+                                 placeholder="ex: Jon snow"
                                  name="Nom"
                                  value={formData.Client.Nom}
                                  onChange={handleChange}  
                                  />
                             </div>
-                            <Label
-                                text="Recipient Email"
-                                placeholder=" ex : senpai@gmail.com"
-                                name="Email"
-                                value={formData.Client.Email}
-                                onChange={handleChange}
-                                />
+                              <Label
+                                  text="Email du Client"
+                                  placeholder="ex : GameOfThrones@gmail/com"
+                                  name="Email"
+                                  value={formData.Client.Email}
+                                  onChange={handleChange}
+                                  />
                             <div>
-                                <label className="block text-gray-700 font-thin mb-1">Phone Number / Address</label>
+                                <label className="block text-gray-700 font-thin mb-1">Numéro / Adresse du Client</label>
                                 <Label
-                                    placeholder="Enter customer number"
+                                    placeholder="ex: +261383008728"
                                     name="Telephone"
                                     value={formData.Client.Telephone}
                                     onChange={handleChange}
                                     
                                     />
                                     
-                                <Label placeholder="Enter customer address"
+                                <Label placeholder="ex: Winterfell, nord"
                                     name="Adresse"
                                     value={formData.Client.Adresse}
                                     onChange={handleChange}
                                     />
                             </div>
-                            <label className="text-lg">Issued on </label> 
-                            {/* <input type="date"
-                                
-                            /> */}
-                            <h1 className="my-5 font-bold">Invoice Item</h1>
+                            {/* <label className="text-lg">Issued on </label>  */}
+                            
+                            <h1 className="my-5 font-bold">Article de facture</h1>
                             <table className="my-10 flex-1">
                                 <thead>
                                     <tr className="text-left">
                                         <th className="font-thin">Code Produit</th>
-                                        <th className="font-thin">Date</th>
-                                        <th className="font-thin">Quantity</th>
-                                        <th className="font-thin">Num Employe</th>
+                                        <th className="font-thin">Date de règlement</th>
+                                        <th className="font-thin">Quantité</th>
+                                        <th className="font-thin">Num Employé</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="text-left">
                                         <td><Label
                                             inputClassName="border-none"
-                                            placeholder="Code Produit"
+                                            placeholder="6"
                                             name="CodeProduit"
+                                            type="number"
                                             value={formData.Produit.CodeProduit}
                                             onChange={handleChange}
                                             />
@@ -161,7 +165,7 @@ const Customers = () =>{
                                         </td>
                                         <td><Label 
                                             inputClassName="border-none"
-                                            placeholder="Date"
+                                            type="date"
                                             name="Date"
                                             value={formData.Produit.Date}
                                             onChange={handleChange}
@@ -171,6 +175,7 @@ const Customers = () =>{
                                             inputClassName="border-none"
                                             placeholder="2"
                                             name="Quantite"
+                                            type="number"
                                             value={formData.Produit.Quantite}
                                             onChange={handleChange}
                                                         
@@ -178,7 +183,8 @@ const Customers = () =>{
                                          </td>
                                         <td><Label 
                                             inputClassName="border-none" 
-                                            placeholder="Numero"
+                                            placeholder="3"
+                                            type="number"
                                             name="NumEmploye"
                                             value={formData.Produit.NumEmploye}
                                             onChange={handleChange}
@@ -193,7 +199,7 @@ const Customers = () =>{
                                 </div> */}
                             </table>
                             <div>
-                                <Button label="Create Invoice" type={onSubmit}/>
+                                <Button label="Create Invoice" type="submit"/>
                             </div>
                     </form>
                 </section>
