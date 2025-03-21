@@ -118,7 +118,7 @@ const Customers = () =>{
                             </div>
                               <Label
                                   text="Email du Client"
-                                  placeholder="ex : GameOfThrones@gmail/com"
+                                  placeholder="ex : GameOfThrones@gmail.com"
                                   name="Email"
                                   value={formData.Client.Email}
                                   onChange={handleChange}
