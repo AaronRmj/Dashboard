@@ -22,8 +22,8 @@ function initModels(sequelize) {
   employe.hasMany(vente, { foreignKey: "NumEmploye"});
   vente.belongsTo(facture, { foreignKey: "NumFacture"});
   facture.hasMany(vente, { foreignKey: "NumFacture"});
-  achat.belongsTo(produit, { foreignKey: "CodeProduit"});
-  produit.hasMany(achat, { foreignKey: "CodeProduit"});
+  achat.belongsTo(produit, { foreignKey: "NomProduit"});
+  produit.hasMany(achat, { foreignKey: "NomProduit"});
   vente.belongsTo(produit, { foreignKey: "CodeProduit"});
   produit.hasMany(vente, { foreignKey: "CodeProduit"});
   achat.belongsTo(fournisseur, {foreignKey :"InfoFournisseur"});
