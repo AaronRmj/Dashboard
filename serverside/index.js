@@ -156,3 +156,89 @@ app.post("/Vente", async (req, res) => {
     }
     
 })*/
+app.post("/Achat", async (req, res) => {
+    const transaction = await db.sequelize.transaction();
+
+    try {
+        const { Date, InfoFournisseur, Telephone, Email, ...produits } = req.body;
+
+        // Vérification des entrées
+        if (!InfoFournisseur || !Date || Object.keys(produits).length === 0) {
+            return res.status(400).json({ error: "Données invalides" });
+        }
+
+        // Vérifier si le fournisseur existe, sinon l'ajouter
+        let fournisseur = await db.fournisseur.findOne({
+            where: { NomEntreprise: InfoFournisseur },
+            transaction
+        });
+
+        if (!fournisseur) {
+            fournisseur = await db.fournisseur.create(
+                { NomEntreprise: InfoFournisseur, Telephone, Email },
+                { transaction }
+            );
+        }
+
+        let achatsEffectués = [];
+
+        for (const key in produits) {
+            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[key];
+
+            if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0 || !Reference) {
+                throw new Error(`Données invalides pour le produit : ${NomProduit}`);
+            }
+
+            let produit = await db.produit.findOne({
+                where: { Description: NomProduit },
+                transaction
+            });
+
+            if (produit) {
+                // Mise à jour du stock, des prix et de la référence si nécessaire
+                produit.Stock += Quantite;
+                if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
+                if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
+                if (produit.Reference !== Reference) produit.Reference = Reference;
+                await produit.save({ transaction });
+            } else {
+                // Création du produit avec la référence
+                produit = await db.produit.create({
+                    Description: NomProduit,
+                    Stock: Quantite,
+                    PAunitaire: Pachat,
+                    PVunitaire: Pvente,
+                    Reference: Reference
+                }, { transaction });
+            }
+
+            // Enregistrement de l'achat
+            const achat = await db.achat.create({
+                NomProduit,
+                Quantite,
+                Date,
+                InfoFournisseur: fournisseur.NomEntreprise
+            }, { transaction });
+
+            achatsEffectués.push({
+                fournisseur: InfoFournisseur,
+                produit: NomProduit,
+                quantite: Quantite,
+                reference: Reference,
+                achatId: achat.id
+            });
+        }
+
+        // Valider la transaction après avoir traité tous les produits
+        await transaction.commit();
+
+        res.status(201).json({
+            message: "Achats enregistrés avec succès",
+            achats: achatsEffectués
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error("Erreur lors de l'achat :", error);
+        res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+    }
+});
