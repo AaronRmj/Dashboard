@@ -15,19 +15,19 @@ const SignupPage = () =>{
             <div className="grid grid-cols-2 w-3/4 shadow-md relative bg-white rounded-lg overflow-hidden">
                 <div className="p-10 space-y-7 h-full">
                     <div className="pt-4">
-                        <h1 className="text-center text-3xl font-thin tracking-wide">Create an account</h1>
-                        <h3 className="text-center">to  Unify your tasks, elevate your performance </h3>
+                        <h1 className="text-center text-3xl font-thin tracking-wide">Créer un compte</h1>
+                        <h3 className="text-center">Unifiez vos tâches, améliorez votre performance </h3>
                     </div>
                     <div className="w-full">
                         <DynamicInput 
                             icon={CiUser}
                             type="text"
-                            placeholder="Username"
+                            placeholder="Nom d'utilisateur"
                             />
                         <DynamicInput 
                             icon={CiUnlock}
                             type="password"
-                            placeholder="Password"
+                            placeholder="Mot de passe"
                             />
                         <DynamicInput 
                             icon={MdOutlineEmail}
@@ -37,13 +37,13 @@ const SignupPage = () =>{
                         <DynamicInput
                             icon={MdAddBusiness}
                             type="text"
-                            placeholder="Company Name"
+                            placeholder="Nom d'entreprise"
                             /> 
                     </div>
                     <Button 
                         label="Sign up" 
                     />
-                    <h1 className="text-sm text-gray-400">Have any account? <Link to="/login" className="text-gray-800 underline">Sign in</Link> </h1>
+                    <h1 className="text-sm text-gray-400">Vous avez un compte ? <Link to="/login" className="text-gray-800 underline">Se connecter</Link> </h1>
                 </div>
                 <div>
                     <img src={sin} alt="illustration" className="w-full h-full object-contain" />

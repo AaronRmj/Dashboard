@@ -21,7 +21,8 @@ module.exports = function(sequelize, DataTypes) {// instance de sequelize io aha
     },
     Description: {
       type: DataTypes.STRING(50),
-      allowNull: true
+      allowNull: true,
+      unique: true
     },
     Reference: {
       type: DataTypes.STRING(50),

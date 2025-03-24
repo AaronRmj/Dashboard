@@ -53,6 +53,8 @@ app.get("/Facture/:idFacture", async (req, res) =>{
     res.status(200).json(facture);
 });
 
+//VENTE
+
 app.post("/Vente", async (req, res) => {
     try {
         // Validation des données
@@ -116,46 +118,8 @@ app.post("/Vente", async (req, res) => {
     }
 });
 
+// ACHAT
 
-/*app.post("/Achat", async (req, res) => {
-    const {CodeProduit, Descri, Quantite, Date, Pachat, Pvente, NumFournisseur} = req.body;
-    const listeProduit = await db.produit.findAll({attributes : ["Description"]}); 
-
-    const check = listeProduit.map(descri => descri == Descri? Descri: null);
-    const doublecheck = check.every(element => element === null);
-    if (!doublecheck){
-        await db.achat.create({ CodeProduit, Quantite, Date, NumFournisseur}).catch(errhandler);
-        const produit = await db.produit.findOne({where: {Description : Descri}}).catch(errhandler); 
-        console.log(produit);
-        const updatedStock = produit.Stock + Quantite;
-        await db.produit.update({Stock : updatedStock}, {where : {Description : Descri}}).catch(errhandler);    
-    }
-    else{
-        await db.produit.create({Stock : Quantite, Description : Descri, PAunitaire : Pachat, PVunitaire : Pvente });
-        const NvCodeProduit = db.produit.findAll({attributes : ["IdProduit"], where : {Description : Descri}});
-        await db.achat.create({ NvCodeProduit, Quantite, Date, NumFournisseur}).catch(errhandler);
-    }
-    res.sendStatus(201);
-
-});*/
-
-/*app.post('/Achat', async () => {
-    const { NomEntreprise } = req.body; 
-    const fournisseurExists = await db.fournisseur.findOne({where : {NomEntreprise : NomEntreprise}});
-    
-    for(prod in req.body.Produits){
-        const { IdProduit, PVunitaire, PAunitaire, Quantite, Description} = req.body[prod];
-        const produitExists = await db.produit.findOne({ where : { Description : Description}});
-        if(!produitExists){
-            const newProduit = await db.produit.create({IdProduit, PVunitaire, PAunitaire, Stock : Quantite, Description})
-        } 
-        else{
-
-        }
-
-    }
-    
-})*/
 app.post("/Achat", async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
