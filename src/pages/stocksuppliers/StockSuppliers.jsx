@@ -6,11 +6,18 @@ import Label from "../../components/ui/Label";
 
 const StockSuppliers = () =>{
     const [inVoice, setInVoiceOpen] = useState(false);
-    const [formData, setFormData] = useState(false);
-    const [error, setError] = useState(false);
-
+    const [formData, setFormData] = useState({
+        Date:"",
+        InfoFournisseur:"",
+        Telephone:"",
+        Email:"",
+        //les  produits seront ajoutés dynamiquement sous prod1 et prod2
+    })
     
+    // setFormData((prev) =>{
+    //     //ajout nouveau produit
 
+    // } )
 
     const handleInvoice = () =>{
         setInVoiceOpen(true);
