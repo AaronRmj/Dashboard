@@ -19,7 +19,7 @@ const Dashboard = () =>{
     return(
         <div className="mx-5 h-screen">
             <h1 className="text-2xl font-bold mb-3">Dashboard</h1>
-            <div className="mx-auto lg:space-x-7">
+            <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
             <LineGraph />

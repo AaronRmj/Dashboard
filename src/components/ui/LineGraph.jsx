@@ -27,7 +27,15 @@ const data = {
     datasets:[
         {
             data:[2000,6000,9000,4000,1000,5000,9000],
-            backgroundColor: "rgba(75,192,192,0.6)",
+            backgroundColor: "rgba(29,78,216,1)",
+            borderColor:"rgba(29,78,216,1)",
+            pointBackgroundColor: "#000",
+            tension: 0.4,
+        },
+        {
+            data:[1000,2000,6000,9000,4000,6000,0],
+            backgroundColor: "rgba(29,78,216,1)",
+            borderColor: "red",
             tension: 0.4,
         }
     ]
