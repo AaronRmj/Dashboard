@@ -1,7 +1,8 @@
 const db = require('./models/db');
-const express = require('express'); // fonction ilay importena eto azo heritreretina hoe anonyme
+const express = require('express'); // importation de la fonction express en lui donnant le nom de express dans ce fichier
 //db.sequelize.sync({alter : true}); // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
 const cors = require('cors');
+const { where } = require('sequelize');
 
 try{
     db.sequelize.authenticate();
@@ -15,10 +16,10 @@ catch(error){
 const errhandler = err => console.log("error : ", err);
 const app = express();
 const PORT = 8080;
-app.use(express.json()); // eny fa na fonction ara ilay express dia manana ny propriétés-any koa 💀
+app.use(express.json()); // Oui, les fontions ont des propriétés en JS 💀
 app.use(cors());
 app.listen(PORT, () => {
-    console.log(`serveur au port ${PORT}`); // backtick eo amin'ny è kay no mampety ilay ${} 🤦‍♂️🤦‍♂️
+    console.log(`serveur au port ${PORT}`);
 })
 
 app.get("/", (req, res) => {
@@ -27,7 +28,7 @@ app.get("/", (req, res) => {
 
 app.get("/Produit", async (req, res) => {
     const produits = await db.produit.findAll();
-    res.status(200).json(produits); // .json() mandefa données sous la forme JSON. avy tamin'ny express
+    res.status(200).json(produits); // .json() pour envoi des données après query sous forme json. **different de toJSON()
 });
 
 app.get("/Clients", async (req, res) => {
@@ -205,4 +206,35 @@ app.post("/Achat", async (req, res) => {
         console.error("Erreur lors de l'achat :", error);
         res.status(500).json({ error: "Une erreur est survenue", details: error.message });
     }
+});
+
+
+// Chiffre d'affaire et benefice sur un Produit d' Id spécifié 
+app.get("/CA/:id", async (req,res)=>{
+    try
+    {
+        let Produit = await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, where: {CodeProduit : req.params.id}});
+        const prixVente = await db.produit.findOne({where: {IdProduit : req.params.id}});
+        let totalQuantite = 0;
+        // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
+        for(i of Produit)
+        {
+            totalQuantite += i["Quantite"];
+        }
+        const CA = totalQuantite * prixVente.PVunitaire; 
+        const PR = totalQuantite * prixVente.PAunitaire; 
+        const Benef = CA - PR;
+        const package = { totalVentes : CA , Benefice : Benef}; // Plus facile à manipuler pour Mr Senpai
+    
+        console.log(Produit);
+        console.log(totalQuantite);
+        console.log(prixVente.PVunitaire);
+    
+        res.status(200).json(package);
+    }
+    catch(erreur)
+    {
+        console.error(erreur);
+        res.status(500).json({message : "Un problème est survenu lors de l'opération"});
+    }    
 });
