@@ -3,7 +3,7 @@ import { FcSalesPerformance } from "react-icons/fc";
 import { MdProductionQuantityLimits } from "react-icons/md";
 import { IoPeopleOutline } from "react-icons/io5";
 import { GoPackageDependencies } from "react-icons/go";
-
+import {LineGraph} from '../../components/ui/LineGraph';
 import Stats from "./Stats";
 
 const Dashboard = () =>{
@@ -22,6 +22,7 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7">
                 <Stats Statistics={Statistics} />
             </div>
+            <LineGraph />
         </div>
     )
 }

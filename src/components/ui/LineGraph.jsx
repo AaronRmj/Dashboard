@@ -1,0 +1,52 @@
+//importer les composants necessaires
+import {Chart as ChartJS, CategoryScale, LinearScale, PointElement,LineElement, Title, Tooltip, Legend} from "chart.js";
+
+import {Line} from "react-chartjs-2";
+
+//enregistrer les composants necessaires de chart.js
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip, 
+    Legend
+);
+//definitions des données a utiliser pour le graph
+const data = {
+    labels:[
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+    ],
+    datasets:[
+        {
+            data:[2000,6000,9000,4000,1000,5000,9000],
+            backgroundColor: "rgba(75,192,192,0.6)",
+            tension: 0.4,
+        }
+    ]
+};
+
+const options = {
+    responsive: true,
+    plugins:{
+        legend:{
+            position:top,
+        },
+        title:{
+            display:true,
+            text:"Graphique des ventes"
+        }
+    }
+}
+
+const LineGraph = () =>{
+    return <Line options={options} data={data} />
+};
+export  {LineGraph}
