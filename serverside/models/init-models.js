@@ -1,4 +1,5 @@
 var DataTypes = require("sequelize").DataTypes;
+var _admin = require("./admin"); 
 var _achat = require("./achat");
 var _client = require("./client");
 var _employe = require("./employe");
@@ -6,8 +7,10 @@ var _facture = require("./facture");
 var _produit = require("./produit");
 var _vente = require("./vente");
 const _fournisseur = require("./fournisseur");
+var _reset_code = require("./mdpOublie");
 
 function initModels(sequelize) {
+  var admin = _admin(sequelize, DataTypes); 
   var achat = _achat(sequelize, DataTypes);
   var client = _client(sequelize, DataTypes);
   var employe = _employe(sequelize, DataTypes);
@@ -15,6 +18,8 @@ function initModels(sequelize) {
   var produit = _produit(sequelize, DataTypes);
   var vente = _vente(sequelize, DataTypes);
   var fournisseur = _fournisseur(sequelize, DataTypes);
+  var reset_code = _reset_code(sequelize, DataTypes);
+
 
   facture.belongsTo(client, { foreignKey: "InfoClient"});
   client.hasMany(facture, { foreignKey: "InfoClient"});
@@ -30,13 +35,15 @@ function initModels(sequelize) {
   fournisseur.hasMany(achat, {foreignKey : "InfoFournisseur"});
   
   return {
+    admin,
     achat,
     client,
     employe,
     facture,
     produit,
     vente,
-    fournisseur
+    fournisseur,
+    reset_code
   };
 }
 module.exports = initModels;
