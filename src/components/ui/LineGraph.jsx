@@ -49,7 +49,7 @@ const options = {
         },
         title:{
             display:true,
-            text:"Graphique des ventes"
+            text:"Bénéfice en fonction du temps"
         }
     }
 }
@@ -57,4 +57,4 @@ const options = {
 const LineGraph = () =>{
     return <Line options={options} data={data} />
 };
-export  {LineGraph}
+export {LineGraph}

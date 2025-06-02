@@ -9,10 +9,10 @@ import Stats from "./Stats";
 const Dashboard = () =>{
 
     const Statistics = [
-        {title: "Total Active Customers", icon: <IoPeopleOutline /> , number: "3000"},
-        {title: "Total Orders", icon: <MdProductionQuantityLimits />  , number: "5000"},
-        {title: "Cost of Sales", icon:<FcSalesPerformance />  , number: "$10000"},
-        {title: "Procurement Cost", icon:<GoPackageDependencies /> , number: "$400"},
+        {title: "Nombre de clients", icon: <IoPeopleOutline /> , number: "3000"},
+        {title: "Nombre de commandes", icon: <MdProductionQuantityLimits />  , number: "5000"},
+        {title: "Total achats", icon:<FcSalesPerformance />  , number: "$10000"},
+        {title: "Total ventes", icon:<GoPackageDependencies /> , number: "$400"},
         
     ]
 
