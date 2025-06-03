@@ -50,6 +50,22 @@ const options = {
         title:{
             display:true,
             text:"Bénéfice en fonction du temps"
+        },
+        labels:{
+            usePointStyle:true,
+            pointStyle: "circle",
+        },
+    },
+    scales:{
+        x:{
+            grid:false,
+        },
+        y:{
+            ticks:{
+                stepSize:2300,
+                padding:20,
+                color:"#A1A9C6"
+            }
         }
     }
 }

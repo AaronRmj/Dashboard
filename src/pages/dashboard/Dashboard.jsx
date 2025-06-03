@@ -9,10 +9,10 @@ import Stats from "./Stats";
 const Dashboard = () =>{
 
     const Statistics = [
-        {title: "Clients actifs", icon: <FaRegUser /> , number: "3000"},
-        {title: "Commandes traités", icon: <LiaShippingFastSolid />  , number: "5000"},
-        {title: "Total achats", icon:<FaShoppingCart />  , number: "$10000"},
-        {title: "Chiffre d'affaires", icon:<TfiMoney /> , number: "$400"},
+        {title: "Clients actifs", icon: <FaRegUser /> , number: "30"},
+        {title: "Commandes traités", icon: <LiaShippingFastSolid />  , number: "500"},
+        {title: "Total achats", icon:<FaShoppingCart />  , number: "$10K"},
+        {title: "Chiffre d'affaires", icon:<TfiMoney /> , number: "$40K"},
         
     ]
 
@@ -22,7 +22,9 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <LineGraph />
+            <div className="bg-white  rounded-2xl">
+                <LineGraph className="w-2/3 h-2/3" />
+            </div>
         </div>
     )
 }
