@@ -22,8 +22,8 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <div className="bg-white  rounded-2xl">
-                <LineGraph className="w-2/3 h-2/3" />
+            <div className="bg-white w-2/3 h-2/3 rounded-2xl">
+                <LineGraph className="" />
             </div>
         </div>
     )

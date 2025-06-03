@@ -4,12 +4,44 @@ const express = require('express'); // importation de la fonction express en lui
 const cors = require('cors');
 const { where } = require('sequelize');
 
+<<<<<<< Updated upstream
 try{
     db.sequelize.authenticate();
     console.log("Connecté à la DB");
 }
 catch(error){
     console.error(error);
+=======
+
+
+// Connexion à la BD
+db.sequelize.authenticate()
+  .then(() => console.log(" Connecté à la BD "))
+  .catch(err => console.error(" Erreur connexion BD :", err));
+
+db.sequelize.sync({ alter: true }) {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
+  .then(() => {
+    console.log(" Synchronisation Sequelize ");
+    console.log("Modèles chargés :", Object.keys(db));
+  })
+  .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+
+// Middlewares fonction avec execution  obtient et renvoie reponse 
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// cree dossier uploads sinon existe 
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+>>>>>>> Stashed changes
 }
 
 
