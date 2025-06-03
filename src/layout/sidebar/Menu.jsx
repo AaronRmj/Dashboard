@@ -6,9 +6,9 @@ const Menu = ({ menuItems }) =>{
     return(
         <ul>
             {menuItems.map((item, index) =>(
-                <li key={index} className="flex items-center space-x-5 p-5">
+                <li key={index} className="flex text-[#A1A9C6] items-center space-x-5 p-5">
                     {item.icon}
-                    <Link to={item.to} className="text-sm font-medium">
+                    <Link to={item.to} className="text-sm text-[#A1A9C6] font-medium">
                         {item.label}    
                     </Link>    
                 </li>

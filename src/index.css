@@ -1,11 +1,11 @@
 @font-face {
-    font-family: urba;
-    src: url("./assets/font/Urbanist-Regular.ttf");
+  font-family: urba;
+  src: url("./assets/font/Urbanist-Regular.ttf");
 }
 
 
 @import "tailwindcss";
 
 @theme{
-    --font-urba: urba, "sans-serif";
+  --font-urba: urba, "sans-serif";
 }

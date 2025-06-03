@@ -7,13 +7,15 @@ const Stats = ({ Statistics }) =>{
             {Statistics.map((statistic, index) => (
                 <div
                     key={index}
-                    className="bg-white p-6 rounded-lg shadow-md flex flex-col space-y-2"
+                    className="bg-[#151A33] border border-white/10 p-6 rounded-lg shadow-md flex flex-col space-y-2"
                 >
-                    <div className="text-3xl text-blue-700">
-                        {statistic.icon}
+                    <div className="flex items-center ml-0">
+                        <div className="text-xl text-[#A1A9C6] mr-[5px]">
+                            {statistic.icon}
+                        </div>
+                    <h3 className="text-[#A1A9C6] text-sm font-medium">{statistic.title}</h3>
                     </div>
-                    <h3 className="text-gray-500 text-sm font-medium">{statistic.title}</h3>
-                    <p className="text-4xl font-bold">{statistic.number}</p>
+                    <p className="text-2xl text-white font-bold">{statistic.number}</p>
                 </div>
             ))}
         </div>

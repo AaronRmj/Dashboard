@@ -21,7 +21,7 @@ const toogleSidebar = () =>{
            <div className="flex items-center space-x-2 px-3">
                <CiMenuFries onClick={toogleSidebar} className="text-2xl lg:hidden md:hidden"/>
                <MdSpaceDashboard/>
-               <Link className="font-bold text-sm">ERP System</Link>
+               <Link className="font-bold text-sm">OPTIMA BUSINESS</Link>
            </div>
            <div>
                 <SearchBar/>
