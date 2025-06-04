@@ -469,36 +469,6 @@ app.post("/Achat", async (req, res) => {
 });
 
 
-// Chiffre d'affaire et benefice sur un Produit d' Id spécifié 
-app.get("/CA/:id", async (req,res)=>{
-    try
-    {
-        let Produit = await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, where: {CodeProduit : req.params.id}});
-        const prixVente = await db.produit.findOne({where: {IdProduit : req.params.id}});
-        let totalQuantite = 0;
-        // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
-        for(i of Produit)
-        {
-            totalQuantite += i["Quantite"];
-        }
-        const CA = totalQuantite * prixVente.PVunitaire; 
-        const PR = totalQuantite * prixVente.PAunitaire; 
-        const Benef = CA - PR;
-        const package = { totalVentes : CA , Benefice : Benef}; // Plus facile à manipuler pour Mr Senpai
-    
-        console.log(Produit);
-        console.log(totalQuantite);
-        console.log(prixVente.PVunitaire);
-    
-        res.status(200).json(package);
-    }
-    catch(erreur)
-    {
-        console.error(erreur);
-        res.status(500).json({message : "Un problème est survenu lors de l'opération"});
-    }    
-});
-
 // BENEFICE total ou par produit ou par date
 app.post("/Benefice", async (req, res)=>{
     let Produits;
@@ -563,7 +533,7 @@ app.post("/Benefice", async (req, res)=>{
     }
     Benefice = CA - PR;
     console.log(CA)
-    res.status(200).json({Benefice : Benefice});
+    res.status(200).json({Benefice : Benefice, CA : CA, SDate: req.body.StartDate, EDate : req.body.EndDate });
 });
 
 
