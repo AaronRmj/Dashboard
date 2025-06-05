@@ -1,57 +1,90 @@
-import React from "react";
-import {useState} from "react";
+import { useState } from "react";
 
-//definit les valeurs par defaut pour chaque champ du formulaire
-const useForm = (initialValues) =>{
-    const [formData, setFormData] = useState(initialValues);
-    const [errors, setErrors] = useState({});
+const useForm = (initialValues) => {
+  const [formData, setFormData] = useState(initialValues);
+  const [errors, setErrors] = useState({});
 
-    //Gestion des changements dans les champs du formulaire
-    const handleChange = (e) =>{
-        /*Destructuration, e.target ilay element HTML kitiana, name ilay nom any dia value ilay valeur any
-        au lieu de
-        const name = e.target.name;
-        const value = e.target.value;
-        */
-        const {name, value} = e.target;
-        setFormData({
-            ...formData,
-            //passer dynamiquement name et value
-            [name]:value,   //Mettre à jour la valeur du champ correspondant
-        })
+  const validate = () => {
+    const newErrors = {};
+
+    const isEmpty = Object.entries(formData).some(([key, val]) => {
+      if (key === "photo") return false;
+      return val.trim() === "";
+    });
+
+    if (isEmpty) {
+      newErrors.submit = "Tous les champs doivent être remplis.";
+      setErrors(newErrors);
+      return false;
     }
-    
 
-    // Fonction pour gérer la soumission du formulaire
-    const handleSubmit = async (url) =>{
-        try{
-            const response = await fetch(url,{
-                method: 'POST',
-                //Indique que les données envoyées sont au format JSON.
-                headers: {
-                    "Content-type": "application/json",
-                },
-                //mamadika an formData ho lasa chaine json
-                body: JSON.stringify(formData),
-                
-            });
-            
-            if (!response.ok) throw new Error("Erreur de la soumission");
-
-            return await response.json();
-
-        }
-        catch (error){
-            setErrors({submit: "Echec de l'envoie du formulaire"});
-        }
-
-}
-
-    return{
-        formData,
-        handleChange,
-        handleSubmit,
-        errors
+    if (!/^[a-zA-ZÀ-ÿ\s]{3,}$/.test(formData.nom.trim())) {
+      newErrors.submit = "Le nom doit contenir au moins 3 lettres (sans caractères spéciaux).";
     }
-}
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      newErrors.submit = "L'adresse email est invalide.";
+    }
+
+    if (formData.password.length < 6) {
+      newErrors.submit = "Le mot de passe doit contenir au moins 6 caractères.";
+    }
+
+    if (!/^[a-zA-Z0-9\s\-]{3,}$/.test(formData.entreprise.trim())) {
+      newErrors.submit = "Le nom d'entreprise est invalide (au moins 3 caractères, sans caractères spéciaux).";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
+  };
+
+  const handleSubmit = async (url) => {
+    if (!validate()) return null;
+
+    try {
+      const data = new FormData();
+      data.append("nom", formData.nom);
+      data.append("email", formData.email);
+      data.append("password", formData.password);
+      data.append("entreprise", formData.entreprise);
+      if (formData.photo) {
+        data.append("photo", formData.photo);
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        body: data,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setErrors({ submit: result.error || "Erreur lors de l'inscription." });
+        return null;
+      }
+
+     
+      return result;
+    } catch (error) {
+      setErrors({ submit: "Erreur de connexion au serveur." });
+      return null;
+    }
+  };
+
+  return {
+    formData,
+    handleChange,
+    handleSubmit,
+    errors,
+  };
+};
+
 export default useForm;
