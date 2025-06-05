@@ -1,12 +1,12 @@
 import React from "react";
-import BCB from "../../../assets/images/BCB.png";
+import logo from "../../../assets/images/logo.jpg";
 
 
 const Logo = () =>{
     return(
         <div className="-mb-15 -mt-18 ">
             <div>
-                <img src={BCB} className="w-2/3  h-85 " />
+                <img src={logo} className="w-2/3  h-85" />
             </div>
         </div>
     )
