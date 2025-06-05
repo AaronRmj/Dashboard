@@ -7,7 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
-const { where } = require('sequelize');
+const { where, Op } = require('sequelize');
 const db = require('./models/db');
 
 
@@ -17,7 +17,7 @@ db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
-  /*db.sequelize.sync({ alter: true }) {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
+/*db.sequelize.sync({ alter: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
   .then(() => {
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
@@ -469,12 +469,23 @@ app.post("/Achat", async (req, res) => {
 });
 
 
-// Chiffre d'affaire et benefice sur un Produit d' Id spécifié 
-app.get("/CA/:id", async (req,res)=>{
-    try
+// BENEFICE total ou par produit ou par date
+app.post("/Benefice", async (req, res)=>{
+    let Produits;
+    if((!req.body.StartDate &&req.body.EndDate)  || (req.body.StartDate && !req.body.EndDate))
     {
-        let Produit = await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, where: {CodeProduit : req.params.id}});
-        const prixVente = await db.produit.findOne({where: {IdProduit : req.params.id}});
+        return res.status(400).json({ error: "Date de Début ou de Fin manquante" });
+    }
+    else if(req.body.idProduit)
+    { 
+        console.log(req.body.StartDate, req.body.EndDate, req.body.StartDate && req.body.EndDate);
+        let Produit = (req.body.StartDate && req.body.EndDate)?
+                      await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, 
+                                              where: {CodeProduit : req.body.idProduit, Date: { [Op.between] : [req.body.StartDate, req.body.EndDate] }}}) :
+                      await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] },
+                                              where: {CodeProduit : req.body.idProduit}});
+
+        const prixVente = await db.produit.findOne({where: {IdProduit : req.body.idProduit}});
         let totalQuantite = 0;
         // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
         for(i of Produit)
@@ -490,16 +501,42 @@ app.get("/CA/:id", async (req,res)=>{
         console.log(totalQuantite);
         console.log(prixVente.PVunitaire);
     
-        res.status(200).json(package);
+        return res.status(200).json(package);
     }
-    catch(erreur)
+    else if(!req.body.StartDate && !req.body.EndDate )
     {
-        console.error(erreur);
-        res.status(500).json({message : "Un problème est survenu lors de l'opération"});
-    }    
+        Produits = await db.vente.findAll({attributes: {exclude: ['IdVente', 'NumEmploye', 'NumFacture'] },
+        include: {
+            model: db.produit, 
+            attributes: ["PVunitaire", "PAunitaire"]
+        }});
+    }
+    else
+    {
+        Produits = await db.vente.findAll({attributes: {exclude: ['IdVente', 'NumEmploye', 'NumFacture'] },
+        where: {Date: {[Op.between] : [req.body.StartDate , req.body.EndDate]} },
+        include: {
+            model: db.produit, 
+            attributes: ["PVunitaire", "PAunitaire"]
+        }});
+    }
+    console.log(Produits.map(i=>i.toJSON()));
+    
+    let CA = 0;
+    let PR = 0;
+    let Benefice = 0;
+  
+    for(article of Produits)
+    {
+        CA += article.Quantite * article.produit.PVunitaire;
+        PR += article.Quantite * article.produit.PAunitaire;
+    }
+    Benefice = CA - PR;
+    console.log(CA)
+    res.status(200).json({Benefice : Benefice, CA : CA, SDate: req.body.StartDate, EDate : req.body.EndDate });
 });
 
 
 app.listen(PORT, () => {
     console.log(`serveur au port ${PORT}`);
-})
+});
