@@ -22,7 +22,7 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <div className="bg-white w-2/3 h-2/3 rounded-2xl">
+            <div className=" w-2/3 h-2/3 rounded-2xl bg-[#151A33] flex items-center p-16">
                 <LineGraph className="" />
             </div>
         </div>
