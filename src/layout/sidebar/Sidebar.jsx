@@ -15,14 +15,14 @@ const Sidebar = ({isSidebarOpen}) => {    //sidebar affiche les elements du menu
 
     //definition les elements de notre menu
     const menuItems = [
-        {label: "Dashboard", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
-        {label: "Manage Customers", to: "/Customers", icon: <IoPeopleOutline /> },
-        {label: "Team", to: "/EmployeeList", icon: <RiTeamLine /> },
-        {label: "Stock Suppliers", to: "/StockSuppliers", icon: <CiBag1 /> },
-        {label: "Products stock", to: "/ProductsStock", icon:<MdOutlineInventory /> },
-        {label: "Transaction History", to: "/History", icon: <MdHistory /> },
-        {label: "To-Do", to: "/Todo", icon:<GrTask />},
-        {label: "Inbox", to: "/Inbox", icon: <FaRegMessage />},
+        {label: "Tableau de bord", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
+        {label: "Gérer clients", to: "/Customers", icon: <IoPeopleOutline /> },
+        {label: "Votre Team", to: "/EmployeeList", icon: <RiTeamLine /> },
+        {label: "Fournisseurs", to: "/StockSuppliers", icon: <CiBag1 /> },
+        {label: "Gérer stocks", to: "/ProductsStock", icon:<MdOutlineInventory /> },
+        {label: "Historique opérations", to: "/History", icon: <MdHistory /> },
+        {label: "Liste des tâches", to: "/Todo", icon:<GrTask />},
+        {label: "Chat", to: "/Inbox", icon: <FaRegMessage />},
     ]
 
     return(
