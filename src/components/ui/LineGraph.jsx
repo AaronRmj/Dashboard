@@ -25,18 +25,22 @@ ChartJS.register(
 //definitions des données a utiliser pour le graph
 const LineGraph = () =>{
 const data = {
-  labels: ['jan', 'fev', 'mar', 'avr', 'mai'], 
+  labels: ['jan', 'fev', 'mar', 'avr', 'mai', 'jui','jul','aou', 'sep', 'oct' , 'nov' , 'dec'], 
   datasets: [
     {
       label: 'Bénefice net',
-      data: [400, 350, 200, 100, 0],
+      data: [300, 100, 200, 100, 0,50, 70, 90 , 100, 60, 120, 200],
       tension: 0.4,
       borderWidth: 1,
       borderColor: '#3B82F6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       pointBackgroundColor: '#3B82F6',
-      pointRadius: 4,
+      pointRadius: 0,
       pointHoverRadius: 6,
+      pointHoverBorderColor: "blue",
+      pointHoverBorderWidth: 2,
+      pointHoverBackgroundColor:"white",
+
       fill: {
         target: 'origin',
         above: 'rgba(59, 130, 246, 0.2)'
@@ -44,13 +48,13 @@ const data = {
     },
     {
       label: 'Chiffre d affaire',
-      data: [100, 300, 0, 100, 350],
+      data: [0, 50, 70, 100, 350, 300, 250, 200, 120 , 130 , 150, 200 ],
       tension: 0.4,
       borderWidth: 1,
       borderColor: '#8B5CF6',
       backgroundColor: 'rgba(139, 92, 246, 0.8)',
       pointBackgroundColor: '#3B82F6',
-      pointRadius: 4,
+      pointRadius: 0,
       pointHoverRadius: 6,
       fill: {
         target: 'origin',
@@ -67,14 +71,29 @@ const options = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
+      labels:{
+        usePointStyle:true,
+        pointStyle:'circle',
+        padding:20,
+      },
       display: true,
       position:"top",
 
     },
+    tooltip:{
+      mode:"index",
+    },
+    interaction:{
+      mode:'nearest',
+      intersect:false,
+    },
+    font:{
+      weight:'bold',
+    },
     tooltip: {
       enabled: true,
       mode: 'index',
-      intersect: true,
+      intersect: false,
     },
     title: {
       display: true, // Désactive le titre intégré si nécessaire
