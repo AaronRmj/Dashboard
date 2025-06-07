@@ -1,57 +1,73 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('employe', {
+module.exports = (sequelize, DataTypes) => {
+  const Employe = sequelize.define("employe", {
     IdEmploye: {
-      autoIncrement: true,
       type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
+      autoIncrement: true,
+      primaryKey: true,
     },
     Nom: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     UserName: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     Adresse: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    Email : {
-      type: DataTypes.STRING(50),
-      allowNull: false
+    Email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isEmail: true,
+      },
     },
     Tel: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     Poste: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     Salaire: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      type: DataTypes.FLOAT,
+      allowNull: false,
     },
     Mdp: {
-      type: DataTypes.STRING(50),
-      allowNull: false
-    }
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    Photo: {
+      type: DataTypes.STRING,
+    },
+    QRCodePath: {
+      type: DataTypes.STRING,
+    },
+    Matricule: {
+      type: DataTypes.STRING,
+    },
+    DateEmbauche: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    NomEntreprise: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
   }, {
-    sequelize,
-    tableName: 'employe',
-    timestamps: false,
+    freezeTableName: true, 
+    timestamps: false,// 
     indexes: [
       {
-        name: "PRIMARY",
         unique: true,
-        using: "BTREE",
-        fields: [
-          { name: "IdEmploye" },
-        ]
+        fields: ['Email', 'NomEntreprise'],
       },
-    ]
+    ],
   });
+
+  return Employe;
 };

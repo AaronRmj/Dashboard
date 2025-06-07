@@ -4,7 +4,7 @@ import { MdErrorOutline, MdCheckCircle } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import DynamicInput from "../../../components/ui/DynamicInput";
 
-const CodeValidation = ({ email, onSuccess }) => {
+const CodeValidation = ({ email,role, onSuccess }) => {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -12,41 +12,48 @@ const CodeValidation = ({ email, onSuccess }) => {
   const navigate = useNavigate();
 
   const handleValidate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await axios.post("http://localhost:8080/validate-code", {
-        email,
-        code,
-      });
+  e.preventDefault();
+  setLoading(true);
+  console.log("Validation payload:", { email, code, role });
 
-      setIsSuccess(true);
-      setMessage(response.data.message);
-      setTimeout(() => {
-        onSuccess(email, code); // Attendre 2s 
-      }, 2000);
-    } catch (err) {
-      setIsSuccess(false);
-      setMessage(err.response?.data?.error || "Erreur serveur");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await axios.post("http://localhost:8080/validate-code", {
+      email,
+      code,
+      role, // mila role envoyena mail en cas oe mety employe na admin le mail 
+    });
+
+    setIsSuccess(true);
+    setMessage(response.data.message);
+
+    setTimeout(() => {
+      onSuccess(email, code, role);
+    }, 2000);
+  } catch (err) {
+    setIsSuccess(false);
+    setMessage(err.response?.data?.error || "Erreur serveur");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="relative">
-    
       <button
         type="button"
         onClick={() => navigate("..")}
-        className="absolute -top-8 right-0 text-gray-500 hover:text-gray-800  hover:scale-105 text-3xl font-bold p-2"
+        className="absolute -top-8 right-0 text-gray-500 hover:text-gray-800 hover:scale-105 text-3xl font-bold p-2"
         title="Retour à la connexion"
       >
         ×
       </button>
 
       <form onSubmit={handleValidate} className="space-y-4">
-        <h2 className="text-xl text-gray-500 font-bold text-center mb-5">Validation du Code</h2>
+        <h2 className="text-xl text-gray-500 font-bold text-center mb-5">
+          Validation du Code
+        </h2>
 
         <p className="text-sm mt-7">
           Votre Email : <strong>{email}</strong>
@@ -57,11 +64,9 @@ const CodeValidation = ({ email, onSuccess }) => {
           placeholder="Code reçu par email"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          className="input"
           required
         />
 
-       
         {message && (
           <div
             className={`flex items-center gap-2 px-4 py-2 rounded-md border text-sm ${
@@ -70,11 +75,7 @@ const CodeValidation = ({ email, onSuccess }) => {
                 : "bg-red-100 text-red-600 border-red-300"
             }`}
           >
-            {isSuccess ? (
-              <MdCheckCircle className="text-lg" />
-            ) : (
-              <MdErrorOutline className="text-lg" />
-            )}
+            {isSuccess ? <MdCheckCircle /> : <MdErrorOutline />}
             <span>{message}</span>
           </div>
         )}
@@ -84,9 +85,9 @@ const CodeValidation = ({ email, onSuccess }) => {
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 transition rounded-lg py-2 text-white text-sm mt-5 flex justify-center items-center"
         >
-          {loading ? (
+          {loading && (
             <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-white border-opacity-50 mr-2"></span>
-          ) : null}
+          )}
           {loading ? "Validation..." : "Valider"}
         </button>
       </form>
