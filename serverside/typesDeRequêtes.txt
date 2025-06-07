@@ -1,29 +1,34 @@
 Ventes:
 {
     "Client" :{
-
             "Nom": "Jean Martin" , 	 	
-            "Tel": "0378649471", 	
+            "Telephone": "0378649451", 	
             "Adresse": "Tsimbazaza",
             "Email": "martin@gmail.com" 	
-
     }, 
 
-    "Produits" :{
-        "prod1" : {
-
+    "Produits" :[
+        {
             "Quantite" : 3,
-            "Date" : "2025-02-24",
-            "CodeProduit" : 3,
+            "Date" : "2025-02-27",
+            "CodeProduit" : 1,
             "NumEmploye" : 3
         },
 
-        "prod2" : {
+        {
             "Quantite" : 3,
-            "Date" : "2025-02-24",
-            "CodeProduit" : 4,
+            "Date" : "2025-02-27",
+            "CodeProduit" : 2,
             "NumEmploye" : 3
         }
-    }
+    ]
     
 }
+
+Benefice:
+{
+    "idProduit" : "",   
+    "StartDate" : "2025-02-24",
+    "EndDate" : "2025-02-27" 
+}*** remplis idProduit d'un integer si tu ne veux que le CA et le Benef d'un produit spécifique entre ces dates
+ *** si tu laisses vide StartDate et EndDate, le benefice calculé sera le benefice GLOBAL depuis depui ^-^

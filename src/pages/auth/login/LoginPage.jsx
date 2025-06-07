@@ -74,8 +74,8 @@ const LoginPage = () => {
       <div className="grid grid-cols-2 shadow-xl bg-white rounded-lg w-6/7 relative">
         <div className="p-8 flex flex-col justify-center h-full">
           <div className="flex justify-center items-center mb-4 ml-25">
-    <Logo />
-  </div>
+            <Logo />
+          </div>
           <h2 className="text-3xl font-bold text-gray-700 mb-7 text-center">
             Connexion à votre compte
           </h2>

@@ -7,7 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
-const { where } = require('sequelize');
+const { where, Op } = require('sequelize');
 const db = require('./models/db');
 
 
@@ -17,12 +17,12 @@ db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
-  /*db.sequelize.sync({ alter: true }) {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
+/*db.sequelize.sync({ alter: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
   .then(() => {
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
   })
-  .catch(err => console.error(" Erreur synchronisation :", err));*/ // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+  .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
 
 const app = express();
@@ -380,39 +380,46 @@ app.post("/Vente", async (req, res) => {
 });
 
 // ACHAT
-
-app.post("/Achat", async (req, res) => {
+app.post("/Achat", upload.any(), async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
     try {
-        const { Date, InfoFournisseur, Telephone, Email, ...produits } = req.body;
+        const { Date, InfoFournisseur, Telephone, Email } = req.body;
+
+        // Les produits sont envoyés en JSON dans un champ `produits`
+        const produits = JSON.parse(req.body.produits); 
 
         // Vérification des entrées
-        if (!InfoFournisseur || !Date || Object.keys(produits).length === 0) {
+        if (!InfoFournisseur || !Date || produits.length === 0) {
             return res.status(400).json({ error: "Données invalides" });
         }
 
+        // Association fichiers -> produits (par index)
+        const fichiers = req.files || [];
+
         // Vérifier si le fournisseur existe, sinon l'ajouter
         let fournisseur = await db.fournisseur.findOne({
-            where: { NomEntreprise: InfoFournisseur },
+            where: { Entreprise: InfoFournisseur },
             transaction
         });
 
         if (!fournisseur) {
             fournisseur = await db.fournisseur.create(
-                { NomEntreprise: InfoFournisseur, Telephone, Email },
+                { Entreprise: InfoFournisseur, Telephone, Email },
                 { transaction }
             );
         }
 
         let achatsEffectués = [];
 
-        for (const key in produits) {
-            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[key];
+        for (let i = 0; i < produits.length; i++) {
+            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[i];
 
             if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0 || !Reference) {
                 throw new Error(`Données invalides pour le produit : ${NomProduit}`);
             }
+
+            const imageProduit = fichiers[i] ? fichiers[i].filename : null;
 
             let produit = await db.produit.findOne({
                 where: { Description: NomProduit },
@@ -420,29 +427,30 @@ app.post("/Achat", async (req, res) => {
             });
 
             if (produit) {
-                // Mise à jour du stock, des prix et de la référence si nécessaire
+                // Mise à jour
                 produit.Stock += Quantite;
                 if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
                 if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
                 if (produit.Reference !== Reference) produit.Reference = Reference;
+                if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
                 await produit.save({ transaction });
             } else {
-                // Création du produit avec la référence
+                // Création
                 produit = await db.produit.create({
                     Description: NomProduit,
                     Stock: Quantite,
                     PAunitaire: Pachat,
                     PVunitaire: Pvente,
-                    Reference: Reference
+                    Reference: Reference,
+                    Image: imageProduit ? `/uploads/${imageProduit}` : null
                 }, { transaction });
             }
 
-            // Enregistrement de l'achat
             const achat = await db.achat.create({
                 NomProduit,
                 Quantite,
                 Date,
-                InfoFournisseur: fournisseur.NomEntreprise
+                InfoFournisseur: fournisseur.Entreprise
             }, { transaction });
 
             achatsEffectués.push({
@@ -450,17 +458,17 @@ app.post("/Achat", async (req, res) => {
                 produit: NomProduit,
                 quantite: Quantite,
                 reference: Reference,
+                image: imageProduit ? `/uploads/${imageProduit}` : null,
                 achatId: achat.id
             });
         }
 
-        // Valider la transaction après avoir traité tous les produits
         await transaction.commit();
-
         res.status(201).json({
             message: "Achats enregistrés avec succès",
             achats: achatsEffectués
         });
+
     } catch (error) {
         await transaction.rollback();
         console.error("Erreur lors de l'achat :", error);
@@ -469,12 +477,23 @@ app.post("/Achat", async (req, res) => {
 });
 
 
-// Chiffre d'affaire et benefice sur un Produit d' Id spécifié 
-app.get("/CA/:id", async (req,res)=>{
-    try
+// BENEFICE total ou par produit ou par date
+app.post("/Benefice", async (req, res)=>{
+    let Produits;
+    if((!req.body.StartDate &&req.body.EndDate)  || (req.body.StartDate && !req.body.EndDate))
     {
-        let Produit = await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, where: {CodeProduit : req.params.id}});
-        const prixVente = await db.produit.findOne({where: {IdProduit : req.params.id}});
+        return res.status(400).json({ error: "Date de Début ou de Fin manquante" });
+    }
+    else if(req.body.idProduit)
+    { 
+        console.log(req.body.StartDate, req.body.EndDate, req.body.StartDate && req.body.EndDate);
+        let Produit = (req.body.StartDate && req.body.EndDate)?
+                      await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] }, 
+                                              where: {CodeProduit : req.body.idProduit, Date: { [Op.between] : [req.body.StartDate, req.body.EndDate] }}}) :
+                      await db.vente.findAll({attributes: { exclude: ['CodeProduit', 'Date', 'IdVente', 'NumEmploye', 'NumFacture'] },
+                                              where: {CodeProduit : req.body.idProduit}});
+
+        const prixVente = await db.produit.findOne({where: {IdProduit : req.body.idProduit}});
         let totalQuantite = 0;
         // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
         for(i of Produit)
@@ -490,16 +509,42 @@ app.get("/CA/:id", async (req,res)=>{
         console.log(totalQuantite);
         console.log(prixVente.PVunitaire);
     
-        res.status(200).json(package);
+        return res.status(200).json(package);
     }
-    catch(erreur)
+    else if(!req.body.StartDate && !req.body.EndDate )
     {
-        console.error(erreur);
-        res.status(500).json({message : "Un problème est survenu lors de l'opération"});
-    }    
+        Produits = await db.vente.findAll({attributes: {exclude: ['IdVente', 'NumEmploye', 'NumFacture'] },
+        include: {
+            model: db.produit, 
+            attributes: ["PVunitaire", "PAunitaire"]
+        }});
+    }
+    else
+    {
+        Produits = await db.vente.findAll({attributes: {exclude: ['IdVente', 'NumEmploye', 'NumFacture'] },
+        where: {Date: {[Op.between] : [req.body.StartDate , req.body.EndDate]} },
+        include: {
+            model: db.produit, 
+            attributes: ["PVunitaire", "PAunitaire"]
+        }});
+    }
+    console.log(Produits.map(i=>i.toJSON()));
+    
+    let CA = 0;
+    let PR = 0;
+    let Benefice = 0;
+  
+    for(article of Produits)
+    {
+        CA += article.Quantite * article.produit.PVunitaire;
+        PR += article.Quantite * article.produit.PAunitaire;
+    }
+    Benefice = CA - PR;
+    console.log(CA)
+    res.status(200).json({Benefice : Benefice, CA : CA, SDate: req.body.StartDate, EDate : req.body.EndDate });
 });
 
 
 app.listen(PORT, () => {
     console.log(`serveur au port ${PORT}`);
-})
+});
