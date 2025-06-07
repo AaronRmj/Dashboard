@@ -28,7 +28,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false,
       references:{
         model: 'fournisseur',
-        key:'NomEntreprise'
+        key:'Entreprise'
       }
     }
   }, {
