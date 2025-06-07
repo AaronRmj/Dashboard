@@ -18,7 +18,7 @@ const QRCode = require('qrcode');
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
-/*
+
 db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
   .then(() => {
     console.log(" Synchronisation Sequelize ");
@@ -27,7 +27,7 @@ db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colo
   .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
 
-*/
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET;
