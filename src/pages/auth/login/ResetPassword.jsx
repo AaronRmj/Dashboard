@@ -9,7 +9,7 @@ import {
   AiOutlineExclamationCircle,
 } from "react-icons/ai";
 
-const ResetPassword = ({ email, code }) => {
+const ResetPassword = ({ email, code, role }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -17,51 +17,46 @@ const ResetPassword = ({ email, code }) => {
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
-const handleReset = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await axios.post("http://localhost:8080/reset-password", {
-      email,
-      code,
-      newPassword,
-      confirmPassword,
-    });
+  const handleReset = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:8080/reset-password", {
+        email,
+        code,
+        newPassword,
+        confirmPassword,
+        role,
+      });
 
-    const { success, message } = response.data;
+      const { success, message } = response.data;
+      setIsSuccess(success);
+      setMessage(message);
 
-    setIsSuccess(success);
-    setMessage(message);
-
-    if (success === true) {
-      setShowPopup(true);
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
-    } else {
-      setShowPopup(false); //  on cache le popup si échec
+      if (success) {
+        setShowPopup(true);
+        setTimeout(() => {
+          navigate("..");
+        }, 2000);
+      }
+    } catch (err) {
+      setIsSuccess(false);
+      setShowPopup(false);
+      setMessage(err.response?.data?.error || "Erreur serveur");
     }
-  } catch (err) {
-    setIsSuccess(false);
-    setShowPopup(false); //  pas de popup si erreur serveur
-    setMessage(err.response?.data?.error || "Erreur serveur");
-  }
-};
+  };
 
   return (
-    <form
-      onSubmit={handleReset}
-      className="relative "
-    >
+    <form onSubmit={handleReset} className="relative">
       <button
         type="button"
         onClick={() => navigate("..")}
-        className="absolute -top-5 right-1  text-gray-500 hover:text-gray-700"
+        className="absolute -top-5 right-1 text-gray-500 hover:text-gray-700"
         title="Retour à la connexion"
       >
         <AiOutlineClose className="text-2xl" />
       </button>
 
-      <h1 className="text-xl font-bold text-center mt-2 mb-5  font-semibold">
+      <h1 className="text-xl font-bold text-center mt-2 mb-5">
         Réinitialisation du mot de passe
       </h1>
 
@@ -91,12 +86,11 @@ const handleReset = async (e) => {
 
       <button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white  py-2 px-4 rounded mt-5"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mt-5"
       >
         Réinitialiser
       </button>
 
-      {/* Popup de succes */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg flex flex-col items-center">

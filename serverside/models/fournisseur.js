@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 module.exports = function (sequelize, DataTypes){
     return sequelize.define('fournisseur', {
-        NomEntreprise : {
+        Entreprise : {
             type : DataTypes.STRING(50),
             allowNull : false,
             primaryKey : true
@@ -9,7 +9,8 @@ module.exports = function (sequelize, DataTypes){
         IdFournisseur: {
             autoIncrement : true,
             type : DataTypes.INTEGER,
-            allowNull : false,
+            unique: true,
+            allowNull : false
         }, 
         Telephone : {
             type : DataTypes.INTEGER,
