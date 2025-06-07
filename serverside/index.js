@@ -24,7 +24,8 @@ db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colo
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
   })
-  .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+  .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
 
 */
 const app = express();
@@ -594,17 +595,22 @@ app.post("/Vente", async (req, res) => {
 });
 
 // ACHAT
-
-app.post("/Achat", async (req, res) => {
+app.post("/Achat", upload.any(), async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
     try {
-        const { Date, InfoFournisseur, Telephone, Email, ...produits } = req.body;
+        const { Date, InfoFournisseur, Telephone, Email } = req.body;
+
+        // Les produits sont supposés être envoyés en JSON dans un champ `produits`
+        const produits = JSON.parse(req.body.produits); 
 
         // Vérification des entrées
-        if (!InfoFournisseur || !Date || Object.keys(produits).length === 0) {
+        if (!InfoFournisseur || !Date || produits.length === 0) {
             return res.status(400).json({ error: "Données invalides" });
         }
+
+        // Association fichiers -> produits (par index)
+        const fichiers = req.files || [];
 
         // Vérifier si le fournisseur existe, sinon l'ajouter
         let fournisseur = await db.fournisseur.findOne({
@@ -621,12 +627,14 @@ app.post("/Achat", async (req, res) => {
 
         let achatsEffectués = [];
 
-        for (const key in produits) {
-            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[key];
+        for (let i = 0; i < produits.length; i++) {
+            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[i];
 
             if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0 || !Reference) {
                 throw new Error(`Données invalides pour le produit : ${NomProduit}`);
             }
+
+            const imageProduit = fichiers[i] ? fichiers[i].filename : null;
 
             let produit = await db.produit.findOne({
                 where: { Description: NomProduit },
@@ -634,24 +642,25 @@ app.post("/Achat", async (req, res) => {
             });
 
             if (produit) {
-                // Mise à jour du stock, des prix et de la référence si nécessaire
+                // Mise à jour
                 produit.Stock += Quantite;
                 if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
                 if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
                 if (produit.Reference !== Reference) produit.Reference = Reference;
+                if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
                 await produit.save({ transaction });
             } else {
-                // Création du produit avec la référence
+                // Création
                 produit = await db.produit.create({
                     Description: NomProduit,
                     Stock: Quantite,
                     PAunitaire: Pachat,
                     PVunitaire: Pvente,
-                    Reference: Reference
+                    Reference: Reference,
+                    Image: imageProduit ? `/uploads/${imageProduit}` : null
                 }, { transaction });
             }
 
-            // Enregistrement de l'achat
             const achat = await db.achat.create({
                 NomProduit,
                 Quantite,
@@ -664,17 +673,17 @@ app.post("/Achat", async (req, res) => {
                 produit: NomProduit,
                 quantite: Quantite,
                 reference: Reference,
+                image: imageProduit ? `/uploads/${imageProduit}` : null,
                 achatId: achat.id
             });
         }
 
-        // Valider la transaction après avoir traité tous les produits
         await transaction.commit();
-
         res.status(201).json({
             message: "Achats enregistrés avec succès",
             achats: achatsEffectués
         });
+
     } catch (error) {
         await transaction.rollback();
         console.error("Erreur lors de l'achat :", error);

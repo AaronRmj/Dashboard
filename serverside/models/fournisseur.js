@@ -4,13 +4,13 @@ module.exports = function (sequelize, DataTypes){
         Entreprise : {
             type : DataTypes.STRING(50),
             allowNull : false,
-            primaryKey : true
+            unique:true
         },
         IdFournisseur: {
             autoIncrement : true,
             type : DataTypes.INTEGER,
-            unique: true,
-            allowNull : false
+            allowNull : false,
+            primaryKey : true
         }, 
         Telephone : {
             type : DataTypes.INTEGER,
