@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 module.exports = function (sequelize, DataTypes){
     return sequelize.define('fournisseur', {
-        NomEntreprise : {
+        Entreprise : {
             type : DataTypes.STRING(50),
             allowNull : false,
             unique:true
