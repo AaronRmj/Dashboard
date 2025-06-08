@@ -25,7 +25,11 @@ module.exports = function(sequelize, DataTypes) {
     },
     InfoFournisseur: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      references:{
+        model: 'fournisseur',
+        key:'Entreprise'
+      }
     }
   }, {
     sequelize,

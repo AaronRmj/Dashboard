@@ -9,6 +9,8 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 const { where, Op } = require('sequelize');
 const db = require('./models/db');
+const QRCode = require('qrcode');
+
 
 
 
@@ -23,6 +25,7 @@ db.sequelize.authenticate()
 //     console.log("Modèles chargés :", Object.keys(db));
 //   })
 //   .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
 
 
 const app = express();
@@ -79,10 +82,6 @@ app.get("/Clients", async (req, res) => {
     res.status(200).json(clients);
 });
 
-app.get("/Employe", async (req, res) => {
-    const employe = await db.employe.findAll();
-    res.status(200).json(employe);
-});
 
 app.get("/Facture/:idFacture", async (req, res) =>{
     const {idFacture} = req.params;
@@ -98,221 +97,437 @@ app.get("/Facture/:idFacture", async (req, res) =>{
 });
 
 
-//  INSCRIPTION
-app.post('/signup', upload.single("photo"), async (req, res) => {
-    try {
-      const { nom, email, password, entreprise } = req.body;
-      const photoPath = req.file ? req.file.filename : null;
-  
-      if (!nom || !email || !password || !entreprise) {
-        return res.status(400).json({ error: "Tous les champs obligatoires ne sont pas fournis" });
-      }
-  
-      const adminExist = await db.admin.findOne({ where: { Email: email } });
-      if (adminExist) return res.status(400).json({ error: "Email déjà utilisé" });
-  
-      const entrepriseExist = await db.admin.findOne({ where: { NomEntreprise: entreprise } });
-      if (entrepriseExist) return res.status(400).json({ error: "Nom d'entreprise déjà utilisé" });
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      await db.admin.create({
-        Nom: nom,
-        Email: email,
-        MotDePasse: hashedPassword,
-        NomEntreprise: entreprise,
-        Photo: photoPath
-      });
-  
-      res.status(201).json({ message: "Admin inscrit avec succès" });
-  
-    } catch (err) {
-      console.error("Erreur signup :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
+// routes
+
+
+//mila telechargena le qrcode alaina avao amle db s dossier 
+
+app.get('/telecharger-qr/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads/employe-qr', filename);
+  res.download(filePath); 
 });
 
 
-//  CONNEXION avec REMEMBER ME
-app.post('/login', async (req, res) => {
-    try {
-      const { email, password, rememberMe } = req.body;
-  
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email et mot de passe requis" });
-      }
-  
-      const admin = await db.admin.findOne({ where: { Email: email } });
-      if (!admin) {
-        return res.status(404).json({ error: "Aucun compte associé à cet email" });
-      }
-  
-      const passwordMatch = await bcrypt.compare(password, admin.MotDePasse);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: "Mot de passe incorrect" });
-      }
-  
-      // TOKEN apres connexion  1h  7j si rememberme
-      const expiresIn = rememberMe ? '7d' : '1h';
-      const token = jwt.sign(
-        { id: admin.IdAdmin, email: admin.Email },
-        JWT_SECRET,
-        { expiresIn }
-      );
-  
-      
-      res.status(200).json({
-        message: "Connexion réussie",
-        token,
-        rememberMe: !!rememberMe,
-        expiresIn
-      });
-  
-    } catch (err) {
-      console.error("Erreur login :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-});
+app.get("/Employe", async (req, res) => {
+  const authHeader = req.headers.authorization;
 
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token manquant ou invalide" });
+  }
 
-// MDP Oublié 
-app.post('/forgot-password', async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email) return res.status(400).json({ error: "Email requis" });
-  
-      const admin = await db.admin.findOne({ where: { Email: email } });
-      if (!admin) return res.status(404).json({ error: "Aucun compte avec cet email" });
-  
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expireAt = new Date(Date.now() + 10 * 60 * 1000);
-  
-      await db.reset_code.create({ Email: email, Code: code, ExpireAt: expireAt });
-  
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Code de réinitialisation de mot de passe",
-        text: `Bonjour,\n\nVotre code de vérification pour réinitialiser votre mot de passe est : ${code}\n\nCe code expire dans 10 minutes.\n\nSi vous n'avez pas demandé cette réinitialisation, ignorez cet email.\n\nCordialement,\nVotre équipe`
-      });
-  
-      res.json({ message: "Code de validation envoyé par email" });
-  
-    } catch (err) {
-      console.error("Erreur forgot-password :", err);
-      res.status(500).json({ error: "Erreur serveur" });
-    }
-});
+  const token = authHeader.split(" ")[1];
 
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-// middle jwt verification apres connex 
-function authMiddleware(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "Token manquant" });
-  
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-      if (err) return res.status(401).json({ error: "Token invalide" });
-      req.admin = decoded;
-      next();
+    const entreprise = decoded.entreprise;
+
+    const employes = await db.employe.findAll({
+      where: { NomEntreprise: entreprise }
     });
+
+    res.status(200).json(employes);
+  } catch (err) {
+    console.error("Erreur de vérification du token :", err);
+    return res.status(403).json({ error: "Token invalide ou expiré" });
+  }
+});
+
+
+//  Inscription
+app.post('/signup', upload.single("photo"), async (req, res) => {
+  try {
+    const { nom, email, password, entreprise } = req.body;
+    const photoPath = req.file ? req.file.filename : null;
+
+    if (!nom || !email || !password || !entreprise) {
+      return res.status(400).json({ error: "Tous les champs   sont obligatoires" });
+    }
+
+    const adminExist = await db.admin.findOne({ where: { Email: email } });
+    if (adminExist) return res.status(400).json({ error: "Email déjà utilisé" });
+
+    const entrepriseExist = await db.admin.findOne({ where: { NomEntreprise: entreprise } });
+    if (entrepriseExist) return res.status(400).json({ error: "Nom d'entreprise déjà utilisé" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.admin.create({
+      Nom: nom,
+      Email: email,
+      MotDePasse: hashedPassword,
+      NomEntreprise: entreprise,
+      Photo: photoPath
+    });
+
+    res.status(201).json({ message: "Admin inscrit avec succès" });
+
+  } catch (err) {
+    console.error("Erreur signup :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Connexion 
+app.post('/login', async (req, res) => {
+  try {
+    const { role, email, password, rememberMe, matricule } = req.body;
+
+    if (!role || !email || !password) {
+      return res.status(400).json({ error: "Role, email et mot de passe requis." });
+    }
+
+    if (role === "admin") {
+      const admin = await db.admin.findOne({ where: { Email: email } });
+      if (!admin) return res.status(404).json({ error: "Admin introuvable." });
+
+      const passwordMatch = await bcrypt.compare(password, admin.MotDePasse);
+      if (!passwordMatch) return res.status(401).json({ error: "Mot de passe incorrect." });
+
+      const token = jwt.sign(
+        { id: admin.IdAdmin, email: admin.Email, role: "admin" ,  entreprise: admin.NomEntreprise  },
+        JWT_SECRET,
+        { expiresIn: rememberMe ? '7d' : '1h' }
+      );
+
+      return res.status(200).json({
+        message: "Connexion admin réussie",
+        token,
+        role: "admin",
+        rememberMe: !!rememberMe
+      });
+
+    } else if (role === "employe") {
+      if (!matricule) {
+        return res.status(400).json({ error: "Le matricule est requis pour l'employé." });
+      }
+
+      // forme matricule  4 chifr-  lettre na chiffre  ..... 0055-erp
+      const matriculeRegex = /^\d{4}-[a-zA-Z0-9]+$/;
+      if (!matriculeRegex.test(matricule)) {
+        return res.status(400).json({ error: "Format de matricule invalide." });
+      }
+
+    
+      const employes = await db.employe.findAll({ where: { Email: email } });
+      if (!employes || employes.length === 0) {
+        return res.status(404).json({ error: "Employé introuvable." });
+      }
+
+
+      const employe = employes.find(emp => emp.Matricule === matricule);
+      if (!employe) {
+        return res.status(401).json({ error: "Matricule incorrect." });
+      }
+
+
+      const passwordMatch = await bcrypt.compare(password, employe.Mdp);
+      if (!passwordMatch) return res.status(401).json({ error: "Mot de passe incorrect." });
+
+      const token = jwt.sign(
+        { id: employe.IdEmploye, email: employe.Email, role: "employe" ,entreprise: employe.NomEntreprise},
+        JWT_SECRET,
+        { expiresIn: rememberMe ? '7d' : '1h' }
+      );
+
+      return res.status(200).json({
+        message: "Connexion employé réussie",
+        token,
+        role: "employe",
+        rememberMe: !!rememberMe
+      });
+
+    } else {
+      return res.status(400).json({ error: "Rôle invalide. Doit être 'admin' ou 'employe'." });
+    }
+
+  } catch (err) {
+    console.error("Erreur login :", err);
+    res.status(500).json({ error: "Erreur serveur." });
+  }
+});
+
+
+
+// mdp oublier 
+app.post('/forgot-password', async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role) return res.status(400).json({ error: "Email et rôle requis" });
+
+    const Model = role === 'admin' ? db.admin : role === 'employe' ? db.employe : null;
+    if (!Model) return res.status(400).json({ error: "Rôle invalide" });
+
+    const user = await Model.findOne({ where: { Email: email } });
+    if (!user) return res.status(404).json({ error: "Aucun compte avec cet email" });
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expireAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await db.reset_code.create({ Email: email, Code: code,Role: role, ExpireAt: expireAt });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Code de réinitialisation de mot de passe",
+      text: `Bonjour,\n\nVotre code est : ${code}\n\nExpire dans 10 minutes.\n\n`
+    });
+
+    res.json({ message: "Code envoyé par email" });
+
+  } catch (err) {
+    console.error("Erreur forgot-password :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Token manquant" });
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Token invalide" });
+    req.user = decoded;
+    next();
+  });
 }
+
 
 // route proteger +profil+ securisee 
 app.get('/profile', authMiddleware, async (req, res) => {
-    const admin = await db.admin.findByPk(req.admin.id, { attributes: { exclude: ['MotDePasse'] } });
-    if (!admin) return res.status(404).json({ error: "Admin introuvable" });
-  
-    res.json({
-      ...admin.toJSON(),
-      photoUrl: admin.Photo ? `${req.protocol}://${req.get('host')}/uploads/${admin.Photo}` : null
-    });
+  const { id, role } = req.user;
+
+  let user = null;
+  if (role === 'admin') {
+    user = await db.admin.findByPk(id, { attributes: { exclude: ['MotDePasse'] } });
+  } else if (role === 'employe') {
+    user = await db.employe.findByPk(id, { attributes: { exclude: ['MotDePasse'] } });
+  }
+
+  if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+
+  res.json({
+    ...user.toJSON(),
+    photoUrl: user.Photo ? `${req.protocol}://${req.get('host')}/uploads/${user.Photo}` : null
+  });
 });
 
-// VERIFICATION DU CODE PAR MAIL
+
 app.post('/validate-code', async (req, res) => {
-    try {
-      const { email, code } = req.body;
-      if (!email || !code) return res.status(400).json({ error: "Code requis" });
-  
-      const record = await db.reset_code.findOne({
-        where: { Email: email, Code: code },
-        order: [['createdAt', 'DESC']]
-      });
-  
-      if (!record) return res.status(400).json({ error: "Code invalide" });
-  
-      const now = new Date();
-      if (now > record.ExpireAt) {
-        return res.status(400).json({ error: "Code expiré" });
-      }
-  
-      res.json({ message: "Code valide" });
-  
-    } catch (err) {
-      console.error("Erreur validate-code :", err);
-      res.status(500).json({ error: "Erreur serveur" });
+  try {
+    const { email, code, role } = req.body;
+    if (!email || !code || !role) {
+      return res.status(400).json({ error: "Email, code et rôle requis" });
     }
+
+    const record = await db.reset_code.findOne({
+      where: { Email: email, Code: code, Role: role },
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!record) return res.status(400).json({ error: "Code invalide ou rôle incorrect" });
+    if (new Date() > record.ExpireAt) {
+      return res.status(400).json({ error: "Code expiré" });
+    }
+
+    res.json({ message: "Code valide" });
+
+  } catch (err) {
+    console.error("Erreur validate-code :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
-/// REINITIALISATION DE MDP APRES LES PROCESSUS 
+
+// changment mdp
 app.post('/reset-password', async (req, res) => {
-    try {
-      const { email, code, newPassword, confirmPassword } = req.body;
-  
-      
-      if (!email || !code || !newPassword || !confirmPassword) {
-        return res.status(400).json({ error: "Tous les champs sont requis" });
-      }
-  
-      if (newPassword !== confirmPassword) {
-        return res.status(400).json({ success: false, error: "Les mots de passe ne correspondent pas" });
-      }
-  
-      const passwordRegex = /^[A-Za-z0-9]{6}$/;
-      if (!passwordRegex.test(newPassword)) {
-        return res.status(400).json({
-           success: false,
-           error: "Le mot de passe doit contenir exactement 6 caractères alphanumériques sans caractères spéciaux"
-        });
-      }
-  
-      const record = await db.reset_code.findOne({
-        where: { Email: email, Code: code },
-        order: [['createdAt', 'DESC']]
-      });
-  
-      if (!record) {
-        return res.status(400).json({ error: "Code invalide" });
-      }
-  
-      const now = new Date();
-      if (now > record.ExpireAt) {
-        return res.status(400).json({ error: "Code expiré" });
-      }
-  
-      // hash mdp
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-  
-      // Maj dans la table 
-      const admin = await db.admin.findOne({ where: { Email: email } });
-      if (!admin) {
-        return res.status(404).json({ error: "Compte introuvable" });
-      }
-  
-      await admin.update({ MotDePasse: hashedPassword });
-  
-      // Suppression code apres 
-      await db.reset_code.destroy({ where: { Email: email } });
-  
-      res.status(200).json({ success: true, message: "Mot de passe réinitialisé avec succès" });
-  
-    } catch (err) {
-      console.error("Erreur reset-password :", err);
-      res.status(500).json({ error: "Erreur serveur" });
+  try {
+    const { email, code, newPassword, confirmPassword, role } = req.body;
+
+    if (!email || !code || !newPassword || !confirmPassword || !role) {
+      return res.status(400).json({ error: "Tous les champs sont requis" });
     }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: "Les mots de passe ne correspondent pas" });
+    }
+
+    const passwordRegex = /^[A-Za-z0-9]{6,6}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        error: "Mot de passe : exactement 6 caractères alphanumériques, pas de caractères spéciaux"
+      });
+    }
+
+    const record = await db.reset_code.findOne({
+      where: { Email: email, Code: code },
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!record) return res.status(400).json({ error: "Code invalide" });
+    if (new Date() > record.ExpireAt) return res.status(400).json({ error: "Code expiré" });
+
+    let user = null;
+    let fieldToUpdate = "";
+
+    if (role === 'admin') {
+      user = await db.admin.findOne({ where: { Email: email } });
+      fieldToUpdate = "MotDePasse";
+    } else if (role === 'employe') {
+      user = await db.employe.findOne({ where: { Email: email } });
+      fieldToUpdate = "Mdp";
+    } else {
+      return res.status(400).json({ error: "Rôle invalide" });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé dans le rôle spécifié" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await user.update({ [fieldToUpdate]: hashedPassword });
+
+    await db.reset_code.destroy({ where: { Email: email } });
+
+    res.status(200).json({ success: true, message: "Mot de passe réinitialisé avec succès" });
+
+  } catch (err) {
+    console.error("Erreur reset-password :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
-  
+
+
+app.post('/ajouter-employe', authMiddleware, upload.single("photo"), async (req, res) => {
+  try {
+    const {
+      nom, username, adresse, email,
+      tel, poste, salaire, motdepasse
+    } = req.body;
+
+    const photoPath = req.file ? req.file.filename : null;
+
+    //regex 
+    
+    
+    if (!nom || !username || !adresse || !email || !tel || !poste || !salaire || !motdepasse || !photoPath) {
+      return res.status(400).json({ error: "Tous les champs sont requis et la photo est obligatoire." });
+    }
+
+    const passwordRegex = /^[A-Za-z0-9]{6,}$/;
+    if (!passwordRegex.test(motdepasse)) {
+      return res.status(400).json({
+        error: "Le mot de passe doit contenir au moins 6 caractères alphanumériques sans caractères spéciaux."
+      });
+    }
+   
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(email)) {
+  return res.status(400).json({ error: "Adresse email invalide." });
+}
+    // verification lo z olona connecte apidtr employe mb iraccordena azy ao @ entreprise 
+    const admin = await db.admin.findByPk(req.user.id);
+    if (!admin) {
+      return res.status(404).json({ error: "Administrateur introuvable." });
+    }
+
+    // Normalisation
+    const nomEntreprise = admin.NomEntreprise.trim().toLowerCase();
+    const emailCheck = email.trim().toLowerCase();
+
+    console.log("==> Débogage avant findOne");
+    console.log("Nom entreprise (admin):", nomEntreprise);
+    console.log("Email saisi:", emailCheck);
+
+    const existant = await db.employe.findOne({
+      where: {
+        Email: emailCheck,
+        NomEntreprise: nomEntreprise
+      }
+    });
+
+    console.log("Résultat existant:", existant);
+
+    if (existant) {
+      return res.status(400).json({
+        error: "Cet email est déjà utilisé dans cette entreprise."
+      });
+    }
+
+
+    const hashedPassword = await bcrypt.hash(motdepasse, 10);
+
+    // generation matricule auto selon id dans l entreprise fa ts id ao amn bd 
+    const employeCount = await db.employe.count({
+      where: { NomEntreprise: nomEntreprise }
+    });
+
+    const numeroMatricule = (employeCount + 1).toString().padStart(4, '0');
+    const suffixEntreprise = nomEntreprise.replace(/\s+/g, '-');
+    const matricule = `${numeroMatricule}-${suffixEntreprise}`;
+
+    const nouvelEmploye = await db.employe.create({
+      Nom: nom,
+      UserName: username,
+      Adresse: adresse,
+      Email: emailCheck,
+      Tel: tel,
+      Poste: poste,
+      Salaire: salaire,
+      Mdp: hashedPassword,
+      Photo: photoPath,
+      QRCodePath: "",
+      NomEntreprise: nomEntreprise,
+      Matricule: matricule
+    });
+
+    // meme methode que l image sur inscription 
+    const qrFolderPath = path.join(__dirname, 'uploads/employe-qr');
+    if (!fs.existsSync(qrFolderPath)) {
+      fs.mkdirSync(qrFolderPath, { recursive: true });
+    }
+
+    // generation qrcode asina mail satria iny no maha unique azy ao amn entreprise 1 
+    const qrData = nouvelEmploye.Email;
+    const qrFileName = `qr-${Date.now()}.png`;
+    const qrCodePath = path.join(qrFolderPath, qrFileName);
+
+    await QRCode.toFile(qrCodePath, qrData);
+
+    // Maj du chemin alefa anaty bd 
+    await nouvelEmploye.update({ QRCodePath: `employe-qr/${qrFileName}` });
+
+    return res.status(201).json({
+      message: "Employé ajouté avec succès.",
+      id: nouvelEmploye.IdEmploye,
+      matricule: matricule,
+      qrCode: `http://localhost:8080/uploads/employe-qr/${qrFileName}`
+    });
+
+  } catch (err) {
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        error: "Un employé avec cet email existe déjà dans cette entreprise."
+      });
+    }
+    
+   if (err.name === 'SequelizeValidationError') {
+    // Traduction humaine des erreurs Sequelize   mety ilaina ko amn manaraka 
+    const messages = err.errors.map(e => {
+      if (e.message.includes("isEmail")) return "Adresse email invalide.";
+      return e.message;
+    });
+
+    return res.status(400).json({ error: messages.join(", ") });
+  }
+
+  console.error("Erreur lors de l'ajout de l'employé :", err);
+  return res.status(500).json({ error: "Erreur serveur." });
+}
+});
   
 //VENTE
 
@@ -380,39 +595,46 @@ app.post("/Vente", async (req, res) => {
 });
 
 // ACHAT
-
-app.post("/Achat", async (req, res) => {
+app.post("/Achat", upload.any(), async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
     try {
-        const { Date, InfoFournisseur, Telephone, Email, ...produits } = req.body;
+        const { Date, InfoFournisseur, Telephone, Email } = req.body;
+
+        // Les produits sont envoyés en JSON dans un champ `produits`
+        const produits = JSON.parse(req.body.produits); 
 
         // Vérification des entrées
-        if (!InfoFournisseur || !Date || Object.keys(produits).length === 0) {
+        if (!InfoFournisseur || !Date || produits.length === 0) {
             return res.status(400).json({ error: "Données invalides" });
         }
 
+        // Association fichiers -> produits (par index)
+        const fichiers = req.files || [];
+
         // Vérifier si le fournisseur existe, sinon l'ajouter
         let fournisseur = await db.fournisseur.findOne({
-            where: { NomEntreprise: InfoFournisseur },
+            where: { Entreprise: InfoFournisseur },
             transaction
         });
 
         if (!fournisseur) {
             fournisseur = await db.fournisseur.create(
-                { NomEntreprise: InfoFournisseur, Telephone, Email },
+                { Entreprise: InfoFournisseur, Telephone, Email },
                 { transaction }
             );
         }
 
         let achatsEffectués = [];
 
-        for (const key in produits) {
-            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[key];
+        for (let i = 0; i < produits.length; i++) {
+            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[i];
 
             if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0 || !Reference) {
                 throw new Error(`Données invalides pour le produit : ${NomProduit}`);
             }
+
+            const imageProduit = fichiers[i] ? fichiers[i].filename : null;
 
             let produit = await db.produit.findOne({
                 where: { Description: NomProduit },
@@ -420,29 +642,30 @@ app.post("/Achat", async (req, res) => {
             });
 
             if (produit) {
-                // Mise à jour du stock, des prix et de la référence si nécessaire
+                // Mise à jour
                 produit.Stock += Quantite;
                 if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
                 if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
                 if (produit.Reference !== Reference) produit.Reference = Reference;
+                if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
                 await produit.save({ transaction });
             } else {
-                // Création du produit avec la référence
+                // Création
                 produit = await db.produit.create({
                     Description: NomProduit,
                     Stock: Quantite,
                     PAunitaire: Pachat,
                     PVunitaire: Pvente,
-                    Reference: Reference
+                    Reference: Reference,
+                    Image: imageProduit ? `/uploads/${imageProduit}` : null
                 }, { transaction });
             }
 
-            // Enregistrement de l'achat
             const achat = await db.achat.create({
                 NomProduit,
                 Quantite,
                 Date,
-                InfoFournisseur: fournisseur.NomEntreprise
+                InfoFournisseur: fournisseur.Entreprise
             }, { transaction });
 
             achatsEffectués.push({
@@ -450,17 +673,17 @@ app.post("/Achat", async (req, res) => {
                 produit: NomProduit,
                 quantite: Quantite,
                 reference: Reference,
+                image: imageProduit ? `/uploads/${imageProduit}` : null,
                 achatId: achat.id
             });
         }
 
-        // Valider la transaction après avoir traité tous les produits
         await transaction.commit();
-
         res.status(201).json({
             message: "Achats enregistrés avec succès",
             achats: achatsEffectués
         });
+
     } catch (error) {
         await transaction.rollback();
         console.error("Erreur lors de l'achat :", error);
