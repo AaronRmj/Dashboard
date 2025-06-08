@@ -159,11 +159,12 @@ const EmployeeList = () => {
           className="rounded-full w-35 h-35 mx-auto object-cover mb-4 border-2 border-gray-400"
         />
 
-        <div className="text-left space-y-1 mt-4 text-sm text-gray-700">
+        <div className="text-center space-y-1 mt-4 text-sm text-gray-700">
           <p><span className="font-semibold">Nom(s) :</span> {employee.Nom}</p>
           <p><span className="font-semibold">Prénom(s) :</span> {employee.UserName}</p>
           <p><span className="font-semibold">Téléphone :</span> {employee.Tel}</p>
           <p><span className="font-semibold">Poste :</span> {employee.Poste}</p>
+          <p><span className="font-semibold">Salaire :</span> {employee.Salaire}</p>
           <p><span className="font-semibold">Adresse :</span> {employee.Adresse}</p>
           <p><span className="font-semibold">Matricule :</span> {employee.Matricule}</p>
 

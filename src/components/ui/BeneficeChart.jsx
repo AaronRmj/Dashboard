@@ -52,7 +52,6 @@ const BeneficeChart = () =>{
         body:JSON.stringify({ idProduit,StartDate:startDate, EndDate: endDate}),
       });
       const data = await response.json();
-      console.log("Réponse de l'API:", data); 
       return data.Benefice ?? 0;
     }
     catch(error){
@@ -61,9 +60,8 @@ const BeneficeChart = () =>{
   }
    useEffect(()=>{
       const loadChartData = async () =>{
-        const idProduit = 6;
+        const idProduit = 3;
         const benefices = await Promise.all( months.map(({start,end}) => fetchBeneficeMois(idProduit, start, end)));
-        console.log('donnee rec', benefices);
         setChartData(benefices);
       
       };
