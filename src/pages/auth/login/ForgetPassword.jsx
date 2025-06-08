@@ -2,24 +2,30 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdCheckCircle, MdErrorOutline } from "react-icons/md";
 
-const ForgetPassword = ({ email, setError }) => {
+const ForgetPassword = ({ email, setError, role }) => {
     const navigate = useNavigate();
     const [successMessage, setSuccessMessage] = useState("");
 
     const handleClick = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (!email) {
-            setError("Veuillez entrer votre email.");
-            return;
-        }
+    if (!email) {
+        setError("Veuillez entrer votre email.");
+        return;
+    }
+    if (!role) {
+        setError("Le rôle est requis pour la réinitialisation.");
+        return;
+    }
+
+
+
 
         try {
             const response = await fetch("http://localhost:8080/forgot-password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
+                body: JSON.stringify({ email, role }),             });
 
             const data = await response.json();
 
@@ -31,7 +37,7 @@ const ForgetPassword = ({ email, setError }) => {
             setSuccessMessage("Code envoyé vers votre email");
             setTimeout(() => {
                 setSuccessMessage("");
-                navigate("/forgot-password", { state: { email } });
+                navigate("/forgot-password", { state: { email,role } });
             }, 3000); // 3 s avat de redirex
 
         } catch (err) {
