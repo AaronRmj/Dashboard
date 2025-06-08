@@ -164,6 +164,7 @@ const EmployeeList = () => {
           <p><span className="font-semibold">Prénom(s) :</span> {employee.UserName}</p>
           <p><span className="font-semibold">Téléphone :</span> {employee.Tel}</p>
           <p><span className="font-semibold">Poste :</span> {employee.Poste}</p>
+          <p><span className="font-semibold">Email :</span> {employee.Email}</p>
           <p><span className="font-semibold">Salaire :</span> {employee.Salaire}</p>
           <p><span className="font-semibold">Adresse :</span> {employee.Adresse}</p>
           <p><span className="font-semibold">Matricule :</span> {employee.Matricule}</p>
