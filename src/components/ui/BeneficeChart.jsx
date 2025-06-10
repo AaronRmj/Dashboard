@@ -43,13 +43,12 @@ const months = [
 const BeneficeChart = () =>{
   const [chartData , setChartData] = useState([]);
 
-  const fetchBeneficeMois = async (idProduit, startDate, endDate) =>{
-    try{
-      console.log("Envoi à l'API:", { idProduit, startDate, endDate }); 
+  const fetchBeneficeMois = async (startDate, endDate) =>{
+    try{ 
       const response = await fetch("http://localhost:8080/Benefice",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ idProduit,StartDate:startDate, EndDate: endDate}),
+        body:JSON.stringify({StartDate:startDate, EndDate: endDate}),
       });
       const data = await response.json();
       return data.Benefice ?? 0;
@@ -60,8 +59,7 @@ const BeneficeChart = () =>{
   }
    useEffect(()=>{
       const loadChartData = async () =>{
-        const idProduit = 3;
-        const benefices = await Promise.all( months.map(({start,end}) => fetchBeneficeMois(idProduit, start, end)));
+        const benefices = await Promise.all( months.map(({start,end}) => fetchBeneficeMois(start, end)));
         setChartData(benefices);
       
       };
@@ -153,7 +151,12 @@ const options = {
         drawBorder: true,
       },
       ticks: {
-        color: '#94A3B8',
+        color: '#000',
+        font:{
+          family:"Urba",
+          weight:"500",
+          size:"15px",
+        }
       }
     },
     y: {
@@ -165,10 +168,16 @@ const options = {
       },
       beginAtZero: true,
       min: 0,
-      max: 500,
+      max: 6000000,
       ticks: {
-        stepSize: 100,
-        color: '#94A3B8',
+        stepSize: 1000000,
+        font:{
+          family:"Urba",
+          weight:"500",
+          size:"15px",
+        },
+        color: '#000',
+        callback: value => value / 1000000 + "M Ar",
       }
     }
   }
