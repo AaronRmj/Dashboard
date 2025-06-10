@@ -10,6 +10,8 @@ require('dotenv').config();
 const { where, Op } = require('sequelize');
 const db = require('./models/db');
 const QRCode = require('qrcode');
+const crypto = require('crypto');
+const bwipjs = require('bwip-js');
 
 
 
@@ -597,24 +599,23 @@ app.post("/Vente", async (req, res) => {
 });
 
 // ACHAT
+
+
+
+
 app.post("/Achat", upload.any(), async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
     try {
         const { Date, InfoFournisseur, Telephone, Email } = req.body;
+        const produits = JSON.parse(req.body.produits);
+        const fichiers = req.files || [];
 
-        // Les produits sont envoyés en JSON dans un champ `produits`
-        const produits = JSON.parse(req.body.produits); 
-
-        // Vérification des entrées
         if (!InfoFournisseur || !Date || produits.length === 0) {
             return res.status(400).json({ error: "Données invalides" });
         }
 
-        // Association fichiers -> produits (par index)
-        const fichiers = req.files || [];
-
-        // Vérifier si le fournisseur existe, sinon l'ajouter
+        // Vérifier ou créer le fournisseur
         let fournisseur = await db.fournisseur.findOne({
             where: { Entreprise: InfoFournisseur },
             transaction
@@ -630,36 +631,56 @@ app.post("/Achat", upload.any(), async (req, res) => {
         let achatsEffectués = [];
 
         for (let i = 0; i < produits.length; i++) {
-            const { NomProduit, Quantite, Pachat, Pvente, Reference } = produits[i];
+            const { NomProduit, Quantite, Pachat, Pvente } = produits[i];
 
-            if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0 || !Reference) {
+            if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0) {
                 throw new Error(`Données invalides pour le produit : ${NomProduit}`);
             }
 
             const imageProduit = fichiers[i] ? fichiers[i].filename : null;
 
+            // Générer un identifiant de code-barres
+            const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
+            const codeBarreTexte = hash.toUpperCase(); //maj
+
+            // Générer image du code-barres
+            const codeBarreImagePath = path.join('uploads/codebarres', `${codeBarreTexte}.png`);
+            const codeBarreFullPath = path.join(__dirname, codeBarreImagePath);
+
+            // Créer image si elle n'existe pas déjà
+            if (!fs.existsSync(codeBarreFullPath)) {
+                const buffer = await bwipjs.toBuffer({
+                    bcid: 'code128',
+                    text: codeBarreTexte,
+                    scale: 3,
+                    height: 10,
+                    includetext: true,
+                    textxalign: 'center',
+                });
+                fs.writeFileSync(codeBarreFullPath, buffer);
+            }
+
+            // Vérifier si le produit existe
             let produit = await db.produit.findOne({
                 where: { Description: NomProduit },
                 transaction
             });
 
             if (produit) {
-                // Mise à jour
                 produit.Stock += Quantite;
                 if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
                 if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
-                if (produit.Reference !== Reference) produit.Reference = Reference;
                 if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
+                produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
                 await produit.save({ transaction });
             } else {
-                // Création
                 produit = await db.produit.create({
                     Description: NomProduit,
                     Stock: Quantite,
                     PAunitaire: Pachat,
                     PVunitaire: Pvente,
-                    Reference: Reference,
-                    Image: imageProduit ? `/uploads/${imageProduit}` : null
+                    Image: imageProduit ? `/uploads/${imageProduit}` : null,
+                    CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`
                 }, { transaction });
             }
 
@@ -674,7 +695,7 @@ app.post("/Achat", upload.any(), async (req, res) => {
                 fournisseur: InfoFournisseur,
                 produit: NomProduit,
                 quantite: Quantite,
-                reference: Reference,
+                codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
                 image: imageProduit ? `/uploads/${imageProduit}` : null,
                 achatId: achat.id
             });
