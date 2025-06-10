@@ -9,10 +9,10 @@ import BeneficeChart from "../../components/ui/BeneficeChart";
 const Dashboard = () =>{
 
     const Statistics = [
-        {title: "Nombre de clients", icon: <IoPeopleOutline /> , number: "3000"},
-        {title: "Nombre de commandes", icon: <MdProductionQuantityLimits />  , number: "5000"},
-        {title: "Total achats", icon:<FcSalesPerformance />  , number: "$10000"},
-        {title: "Total ventes", icon:<GoPackageDependencies /> , number: "$400"},
+        {title: "Nombre de clients", icon: <IoPeopleOutline /> , number: "300"},
+        {title: "Nombre de commandes", icon: <MdProductionQuantityLimits />  , number: "500"},
+        {title: "Total achats", icon:<FcSalesPerformance />  , number: "15M"},
+        {title: "Total ventes", icon:<GoPackageDependencies /> , number: "40M"},
         
     ]
 

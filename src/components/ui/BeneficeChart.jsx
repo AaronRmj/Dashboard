@@ -118,7 +118,12 @@ const options = {
       labels: {
         usePointStyle: true,
         pointStyle: 'circle',
-        padding: 20,
+        padding: 10,
+        color:"#000",
+        font:{
+          weight:"500",
+          family:"Urba"
+        }
       },
       display: true,
       position: "top",

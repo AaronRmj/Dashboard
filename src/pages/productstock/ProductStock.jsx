@@ -70,10 +70,10 @@ const ProductsStock = () =>{
                             <table className="w-full border-collapse border-gray-300">
                                 <thead className="">
                                     <tr className=" text-left">
-                                                    <th className="p-2">Product</th>
-                                                    <th  className="p-2">Category</th>
-                                                    <th  className="p-2">Price</th>
-                                                    <th  className="p-2">Items</th>
+                                                    <th className="p-2">Produits</th>
+                                                    <th  className="p-2">Categorie</th>
+                                                    <th  className="p-2">Prix</th>
+                                                    <th  className="p-2">Quanité</th>
                                                     <th  className="p-2 text-center">Action</th>
                                     </tr>                                
                                 </thead>
