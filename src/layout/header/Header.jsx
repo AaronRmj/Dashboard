@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { CiMenuFries } from "react-icons/ci";
 import { MdSpaceDashboard } from "react-icons/md";
-import  SearchBar  from './SearchBar';
+import logo from "../../assets/images/logo.png"
 import Status from './Status';
 import Sidebar from "../sidebar/Sidebar";
 import { Link } from "react-router-dom";
+
 
 const Header = () =>{
 
@@ -17,14 +18,11 @@ const toogleSidebar = () =>{
 
     return(
      <>
-        <nav className="top-0 fixed w-full z-50 h-13 bg-white flex items-center border-blue-100 border-b">
+        <nav className="top-0 fixed w-full z-50 h-14 bg-white flex items-center border-blue-100 border-b">
            <div className="flex items-center space-x-2 px-3">
                <CiMenuFries onClick={toogleSidebar} className="text-2xl lg:hidden md:hidden"/>
-               <MdSpaceDashboard/>
-               <Link className="font-bold text-sm">ERP System</Link>
-           </div>
-           <div>
-                <SearchBar/>
+               <img src={logo} className="h-20"/>
+               <Link className="font-bold text-sm">OPTIMA BUSINESS</Link>
            </div>
            <div>
                 <Status />
