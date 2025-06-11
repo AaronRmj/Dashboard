@@ -14,20 +14,21 @@ const QRCode = require('qrcode');
 
 
 
+
 // Connexion à la BD
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
+
 /*
-db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
+db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
   .then(() => {
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
   })
-  .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
-
-
+  .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 */
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -601,7 +602,7 @@ app.post("/Achat", upload.any(), async (req, res) => {
     try {
         const { Date, InfoFournisseur, Telephone, Email } = req.body;
 
-        // Les produits sont supposés être envoyés en JSON dans un champ `produits`
+        // Les produits sont envoyés en JSON dans un champ `produits`
         const produits = JSON.parse(req.body.produits); 
 
         // Vérification des entrées
