@@ -18,7 +18,6 @@ const QRCode = require('qrcode');
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
-
 /*db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
   .then(() => {
     console.log(" Synchronisation Sequelize ");
@@ -26,6 +25,7 @@ db.sequelize.authenticate()
   })
   .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 */
+
 
 
 const app = express();
@@ -708,7 +708,7 @@ app.post("/Achat", upload.any(), async (req, res) => {
     try {
         const { Date, InfoFournisseur, Telephone, Email } = req.body;
 
-        // Les produits sont supposés être envoyés en JSON dans un champ `produits`
+        // Les produits sont envoyés en JSON dans un champ `produits`
         const produits = JSON.parse(req.body.produits); 
 
         // Vérification des entrées

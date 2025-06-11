@@ -3,8 +3,8 @@ import { FcSalesPerformance } from "react-icons/fc";
 import { MdProductionQuantityLimits } from "react-icons/md";
 import { IoPeopleOutline } from "react-icons/io5";
 import { GoPackageDependencies } from "react-icons/go";
-import {LineGraph} from '../../components/ui/LineGraph';
 import Stats from "./Stats";
+import BeneficeChart from "../../components/ui/BeneficeChart";
 
 const Dashboard = () =>{
 
@@ -22,8 +22,8 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <div className="flex-1 h-2/3 bg-white rounded-xl shadow-xl px-5">
-                <LineGraph />
+            <div className="flex-1 bg-white rounded-xl shadow-xl px-5">
+                <BeneficeChart />
             </div>
         </div>
     )
