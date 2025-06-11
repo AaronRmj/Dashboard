@@ -600,9 +600,6 @@ app.post("/Vente", async (req, res) => {
 
 // ACHAT
 
-
-
-
 app.post("/Achat", upload.any(), async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
