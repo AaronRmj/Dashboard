@@ -32,3 +32,11 @@ Benefice:
     "EndDate" : "2025-02-27" 
 }*** remplis idProduit d'un integer si tu ne veux que le CA et le Benef d'un produit spécifique entre ces dates
  *** si tu laisses vide StartDate et EndDate, le benefice calculé sera le benefice GLOBAL depuis depui ^-^
+
+Achat:
+Date:2025-06-10
+InfoFournisseur:Rabe
+Telephone:0324567894
+Email:Rabe@gmail.com
+produits:[{"NomProduit":"Livre",  "Quantite":40, "Pachat": 10000, "Pvente": 15000, "Reference": "PR085" }]
+// mets unindex n'importe quoi pour l'image

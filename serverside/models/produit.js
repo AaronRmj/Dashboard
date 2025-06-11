@@ -15,6 +15,19 @@ module.exports = function(sequelize, DataTypes) {// instance de sequelize io aha
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    Stock: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    Description: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true
+    },
+    Image: {
+      type: Sequelize.STRING,
+      allowNull: true
+    },
    Stock: {
   type: DataTypes.INTEGER,
   allowNull: true,
