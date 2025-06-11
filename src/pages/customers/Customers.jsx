@@ -7,7 +7,7 @@ import Label from "../../components/ui/Label";
 
 const Customers = () =>{
     const [inVoice, setInVoiceOpen] = useState(false);
-
+    const [sucess, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
         Client:{
             Nom:"",

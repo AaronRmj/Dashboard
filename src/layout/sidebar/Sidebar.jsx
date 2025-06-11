@@ -6,7 +6,7 @@ import { GrTask } from "react-icons/gr";
 import { RiTeamLine } from "react-icons/ri";
 import { CiBag1 } from "react-icons/ci";
 import { useNavigate, useLocation } from "react-router-dom";
-import Ispm from"../../assets/images/ispm.png";
+
 
 const Sidebar = ({ isSidebarOpen }) => {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ const Sidebar = ({ isSidebarOpen }) => {
                 key={item.to}
                 onClick={() => navigate(item.to)}
                 className={`flex items-center gap-3 px-3 py-2 text-md font-medium text-gray-700 transition rounded w-full text-left ${
-                  isActive ? "bg-gray-100 text-sky-800" : "hover:bg-gray-100"
+                  isActive ? "bg-blue-500 text-white transition-all duration-300 ease-linear" : "hover:bg-gray-100"
                 }`}
               >
                 <span className="text-xl">{item.icon}</span>
@@ -56,7 +56,7 @@ const Sidebar = ({ isSidebarOpen }) => {
 
         </div>
 
-     <img src={Ispm} alt="ISPM" />
+    
 
         
 <div className="py-4 px-1 w-full border-t border-gray-300">
@@ -99,7 +99,7 @@ const Sidebar = ({ isSidebarOpen }) => {
                 Annuler
               </button>
               <button
-                className="px-4 py-2 text-sm rounded bg-red-500 text-white hover:bg-red-600"
+                className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-500"
                 onClick={handleLogout}
               >
                 Se déconnecter

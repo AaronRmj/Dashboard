@@ -21,7 +21,7 @@ const BestSellerChart = () => {
             {
                 label:"Ventes",
                 data:[350,250,500],
-                backgroundColor: ['#bfdbfe','#3b82f6','#60a5fa'],
+                backgroundColor: ['#3b82f6','#10b981','#f59e0b'],
                 BorderWidth:1,
             }
             
@@ -32,16 +32,25 @@ const BestSellerChart = () => {
         responsive:true,
         plugins:{
             legend:{
-                position:'top',
+                position:'bottom',
+                labels:{
+                    padding:18,
+                    font:{
+                        family:"Urba",
+                        size:14,
+                        weight:500,
+                    },
+                    color:"#000"
+                }
             },
             title:{
                 display:true,
                 text:'Les meilleurs ventes',
                 font:{
                     family:"Urba",
-                    weight:300,
-                    size:18,
-                }
+                    size:20,
+                },
+                color:"gray-500"
             }
 
         }

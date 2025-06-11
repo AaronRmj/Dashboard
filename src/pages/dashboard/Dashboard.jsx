@@ -26,8 +26,8 @@ const Dashboard = () =>{
                 <div className="col-span-4">
                     <BeneficeChart className="flex"/>
                 </div>
-                <div className="col-span-2 flex text-center items-center">
-                    <BestSellerChart className="" />
+                <div className="col-span-2 flex text-center items-center ">
+                    <BestSellerChart />
                 </div>
             </div>
         </div>
