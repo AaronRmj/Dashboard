@@ -18,23 +18,13 @@ const QRCode = require('qrcode');
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
-
-
-
-  // db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colonne, sans arguments
-  // .then(()=>{
-  //   console.log("Synchronisation sequelize");
-  //   console.log("Modeles chargés : ", Object.keys(db));
-  // })
-  // .catch(err => console.error("erreur synchronisation:" ,err));
-
-
-// db.sequelize.sync({ alter: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
-//   .then(() => {
-//     console.log(" Synchronisation Sequelize ");
-//     console.log("Modèles chargés :", Object.keys(db));
-//   })
-//   .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+/*db.sequelize.sync({ force: true }) //{alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il detecte qu'il devrait créer une novelle table
+  .then(() => {
+    console.log(" Synchronisation Sequelize ");
+    console.log("Modèles chargés :", Object.keys(db));
+  })
+  .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+*/
 
 
 
@@ -198,7 +188,7 @@ app.post('/login', async (req, res) => {
       const token = jwt.sign(
         { id: admin.IdAdmin, email: admin.Email, role: "admin" ,  entreprise: admin.NomEntreprise  },
         JWT_SECRET,
-        { expiresIn: rememberMe ? '7d' : '1h' }
+        { expiresIn: rememberMe ? '20d' : '4d' }
       );
 
       return res.status(200).json({
@@ -238,7 +228,7 @@ app.post('/login', async (req, res) => {
       const token = jwt.sign(
         { id: employe.IdEmploye, email: employe.Email, role: "employe" ,entreprise: employe.NomEntreprise},
         JWT_SECRET,
-        { expiresIn: rememberMe ? '7d' : '1h' }
+        { expiresIn: rememberMe ? '22d' : '4d' }
       );
 
       return res.status(200).json({
@@ -280,8 +270,8 @@ app.post('/forgot-password', async (req, res) => {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Code de réinitialisation de mot de passe",
-      text: `Bonjour,\n\nVotre code est : ${code}\n\nExpire dans 10 minutes.\n\n`
+      subject: "Voici votre de réinitialisation de mot de passe",
+      text: `Bonjour,\n\nVotre code de réinitialisation  est : ${code}\n\nCe code expirera dans 10 minutes.\n\n`
     });
 
     res.json({ message: "Code envoyé par email" });
@@ -539,6 +529,52 @@ if (!emailRegex.test(email)) {
 }
 });
   
+
+
+
+app.get('/user-info', authMiddleware, async (req, res) => {
+  try {
+    const { role, id } = req.user;
+    const baseUrl = 'http://localhost:8080/uploads/';
+
+    if (role === "admin") {
+      const admin = await db.admin.findOne({ where: { IdAdmin: id } });
+      if (!admin) return res.status(404).json({ error: "Admin introuvable" });
+
+      return res.json({
+        name: admin.Nom,
+      
+        email: admin.Email,
+        entreprise: admin.NomEntreprise,
+        photoUrl: admin.Photo ? baseUrl + admin.Photo : null,
+        role: "admin"
+      });
+
+    } else if (role === "employe") {
+      const employe = await db.employe.findOne({ where: { IdEmploye: id } });
+      if (!employe) return res.status(404).json({ error: "Employé introuvable" });
+
+      return res.json({
+        name: employe.Nom,
+        username: employe.UserName,
+        email: employe.Email,
+        entreprise: employe.NomEntreprise,
+        poste: employe.Poste,
+        matricule: employe.Matricule, // <-- ajout ici
+        photoUrl: employe.Photo ? baseUrl + employe.Photo : null,
+        role: "employe"
+      });
+
+    } else {
+      return res.status(400).json({ error: "Rôle invalide" });
+    }
+  } catch (error) {
+    console.error("Erreur récupération info utilisateur :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
 //VENTE
 
 app.post("/Vente", async (req, res) => {
@@ -603,6 +639,67 @@ app.post("/Vente", async (req, res) => {
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
 });
+
+
+
+// Route MAJ photo de profil (admin ou employe)
+app.post('/update-photo', upload.single('photo'), async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token manquant ou invalide" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { id, role } = decoded;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Aucune photo téléchargée." });
+    }
+
+    const newPhotoPath = req.file.filename;
+
+    if (role === "admin") {
+      const admin = await db.admin.findByPk(id);
+      if (!admin) return res.status(404).json({ error: "Admin introuvable." });
+
+      // Supprimer l'ancienne photo si existante
+      if (admin.Photo) {
+        const oldPath = path.join(__dirname, 'uploads', admin.Photo);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+
+      // MAJ BDD
+      admin.Photo = newPhotoPath;
+      await admin.save();
+
+    } else if (role === "employe") {
+      const employe = await db.employe.findByPk(id);
+      if (!employe) return res.status(404).json({ error: "Employé introuvable." });
+
+      if (employe.Photo) {
+        const oldPath = path.join(__dirname, 'uploads', employe.Photo);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+
+      employe.Photo = newPhotoPath;
+      await employe.save();
+
+    } else {
+      return res.status(400).json({ error: "Rôle non reconnu." });
+    }
+
+    res.status(200).json({ message: "Photo mise à jour avec succès", photoUrl: `http://localhost:${PORT}/uploads/${newPhotoPath}` });
+
+  } catch (err) {
+    console.error("Erreur update photo :", err);
+    res.status(500).json({ error: "Erreur serveur lors de la mise à jour de la photo." });
+  }
+});
+
 
 // ACHAT
 app.post("/Achat", upload.any(), async (req, res) => {
