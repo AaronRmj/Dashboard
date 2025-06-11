@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { CiMenuFries } from "react-icons/ci";
 import { MdSpaceDashboard } from "react-icons/md";
-import SearchBar from './SearchBar';
 import Sidebar from "../sidebar/Sidebar";
 import { Link } from "react-router-dom";
 import UserInfo from "./UserInfo";
@@ -24,7 +23,7 @@ const Header = () => {
           </Link>
         </div>
 
-        <SearchBar />
+       
 
         <div className="flex items-center gap-4">
           <UserInfo />
