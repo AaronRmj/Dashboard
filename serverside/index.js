@@ -729,119 +729,134 @@ app.post('/update-photo', upload.single('photo'), async (req, res) => {
 });
 
 
-// ACHAT
-
 app.post("/Achat", upload.any(), async (req, res) => {
-    const transaction = await db.sequelize.transaction();
+  const transaction = await db.sequelize.transaction();
 
-    try {
-        const { Date, InfoFournisseur, Telephone, Email } = req.body;
-        const produits = JSON.parse(req.body.produits);
-        const fichiers = req.files || [];
-
-        if (!InfoFournisseur || !Date || produits.length === 0) {
-            return res.status(400).json({ error: "Données invalides" });
-        }
-
-        // Vérifier ou créer le fournisseur
-        let fournisseur = await db.fournisseur.findOne({
-            where: { Entreprise: InfoFournisseur },
-            transaction
-        });
-
-        if (!fournisseur) {
-            fournisseur = await db.fournisseur.create(
-                { Entreprise: InfoFournisseur, Telephone, Email },
-                { transaction }
-            );
-        }
-
-        let achatsEffectués = [];
-
-        for (let i = 0; i < produits.length; i++) {
-            const { NomProduit, Quantite, Pachat, Pvente } = produits[i];
-
-            if (!NomProduit || Quantite <= 0 || Pachat < 0 || Pvente < 0) {
-                throw new Error(`Données invalides pour le produit : ${NomProduit}`);
-            }
-
-            const imageProduit = fichiers[i] ? fichiers[i].filename : null;
-
-            // Générer un identifiant de code-barres
-            const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
-            const codeBarreTexte = hash.toUpperCase(); //maj
-
-            // Générer image du code-barres
-            const codeBarreImagePath = path.join('uploads/codebarres', `${codeBarreTexte}.png`);
-            const codeBarreFullPath = path.join(__dirname, codeBarreImagePath);
-
-            // Créer image si elle n'existe pas déjà
-            if (!fs.existsSync(codeBarreFullPath)) {
-                const buffer = await bwipjs.toBuffer({
-                    bcid: 'code128',
-                    text: codeBarreTexte,
-                    scale: 3,
-                    height: 10,
-                    includetext: true,
-                    textxalign: 'center',
-                });
-                fs.writeFileSync(codeBarreFullPath, buffer);
-            }
-
-            // Vérifier si le produit existe
-            let produit = await db.produit.findOne({
-                where: { Description: NomProduit },
-                transaction
-            });
-
-            if (produit) {
-                produit.Stock += Quantite;
-                if (produit.PAunitaire !== Pachat) produit.PAunitaire = Pachat;
-                if (produit.PVunitaire !== Pvente) produit.PVunitaire = Pvente;
-                if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
-                produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
-                await produit.save({ transaction });
-            } else {
-                produit = await db.produit.create({
-                    Description: NomProduit,
-                    Stock: Quantite,
-                    PAunitaire: Pachat,
-                    PVunitaire: Pvente,
-                    Image: imageProduit ? `/uploads/${imageProduit}` : null,
-                    CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`
-                }, { transaction });
-            }
-
-            const achat = await db.achat.create({
-                NomProduit,
-                Quantite,
-                Date,
-                InfoFournisseur: fournisseur.Entreprise
-            }, { transaction });
-
-            achatsEffectués.push({
-                fournisseur: InfoFournisseur,
-                produit: NomProduit,
-                quantite: Quantite,
-                codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
-                image: imageProduit ? `/uploads/${imageProduit}` : null,
-                achatId: achat.id
-            });
-        }
-
-        await transaction.commit();
-        res.status(201).json({
-            message: "Achats enregistrés avec succès",
-            achats: achatsEffectués
-        });
-
-    } catch (error) {
-        await transaction.rollback();
-        console.error("Erreur lors de l'achat :", error);
-        res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+  try {
+    const { Date, InfoFournisseur, Telephone, Email } = req.body;
+    if (!InfoFournisseur || !Date) {
+      return res.status(400).json({ error: "InfoFournisseur et Date sont requis" });
     }
-});
 
+    // Parse produits JSON, vérifier que c’est un tableau et non vide
+    let produits;
+    try {
+      produits = JSON.parse(req.body.produits);
+    } catch {
+      return res.status(400).json({ error: "Format des produits invalide" });
+    }
+    if (!Array.isArray(produits) || produits.length === 0) {
+      return res.status(400).json({ error: "Au moins un produit est requis" });
+    }
+
+    // Vérifier chaque produit
+    for (const p of produits) {
+      if (
+        !p.NomProduit || typeof p.NomProduit !== "string" || p.NomProduit.trim() === "" ||
+        !p.Quantite || isNaN(p.Quantite) || Number(p.Quantite) <= 0 ||
+        p.Pachat === undefined || isNaN(p.Pachat) || Number(p.Pachat) < 0 ||
+        p.Pvente === undefined || isNaN(p.Pvente) || Number(p.Pvente) < 0
+      ) {
+        return res.status(400).json({
+          error: `Données invalides pour le produit : ${p.NomProduit || "inconnu"}`
+        });
+      }
+    }
+
+    // Trouver ou créer le fournisseur
+    let fournisseur = await db.fournisseur.findOne({
+      where: { Entreprise: InfoFournisseur },
+      transaction,
+    });
+    if (!fournisseur) {
+      fournisseur = await db.fournisseur.create(
+        { Entreprise: InfoFournisseur, Telephone, Email },
+        { transaction }
+      );
+    }
+
+    // Traitement des produits + achats
+    const achatsEffectues = [];
+
+    for (let i = 0; i < produits.length; i++) {
+      const { NomProduit, Quantite, Pachat, Pvente } = produits[i];
+      const quantiteNum = Number(Quantite);
+      const pachatNum = Number(Pachat);
+      const pventeNum = Number(Pvente);
+
+      const fichier = req.files[i];
+      const imageProduit = fichier ? fichier.filename : null;
+
+      // Générer code-barres
+      const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
+      const codeBarreTexte = hash.toUpperCase();
+
+      const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
+      if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
+      const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
+
+      if (!fs.existsSync(codeBarreImagePath)) {
+        const buffer = await bwipjs.toBuffer({
+          bcid: 'code128',
+          text: codeBarreTexte,
+          scale: 3,
+          height: 10,
+          includetext: true,
+          textxalign: 'center',
+        });
+        fs.writeFileSync(codeBarreImagePath, buffer);
+      }
+
+      // Trouver produit existant
+      let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
+
+      if (produit) {
+        produit.Stock += quantiteNum;
+        if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
+        if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
+        if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
+        produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
+        await produit.save({ transaction });
+      } else {
+        produit = await db.produit.create({
+          Description: NomProduit,
+          Stock: quantiteNum,
+          PAunitaire: pachatNum,
+          PVunitaire: pventeNum,
+          Image: imageProduit ? `/uploads/${imageProduit}` : null,
+          CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+        }, { transaction });
+      }
+
+      const achat = await db.achat.create({
+        NomProduit,
+        Quantite: quantiteNum,
+        Date,
+        InfoFournisseur: fournisseur.Entreprise,
+      }, { transaction });
+
+      achatsEffectues.push({
+        fournisseur: InfoFournisseur,
+        produit: NomProduit,
+        quantite: quantiteNum,
+        codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+        image: imageProduit ? `/uploads/${imageProduit}` : null,
+        achatId: achat.id,
+      });
+    }
+
+    await transaction.commit();
+    return res.status(201).json({
+      message: "Achats enregistrés avec succès",
+      achats: achatsEffectues,
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Erreur lors de l'achat :", error);
+    return res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+  }
+});
 
 // BENEFICE total ou par produit ou par date
 app.post("/Benefice", async (req, res)=>{
