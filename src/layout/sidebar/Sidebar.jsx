@@ -7,6 +7,7 @@ import { FaRegMessage } from "react-icons/fa6";
 import { GrTask } from "react-icons/gr";
 import { RiTeamLine } from "react-icons/ri";
 import { CiBag1 } from "react-icons/ci";
+import SearchBar from "../header/SearchBar";
 import Menu from "./Menu";
 
 
@@ -15,6 +16,7 @@ const Sidebar = ({isSidebarOpen}) => {    //sidebar affiche les elements du menu
 
     //definition les elements de notre menu
     const menuItems = [
+        {icon: <SearchBar /> },
         {label: "Tableau de bord", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
         {label: "Gérer clients", to: "/Customers", icon: <IoPeopleOutline /> },
         {label: "Votre Team", to: "/EmployeeList", icon: <RiTeamLine /> },

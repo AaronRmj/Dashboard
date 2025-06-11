@@ -17,13 +17,13 @@ const SearchBar = () =>{
             {/*icone de recherche*/}
             <button
                 onClick={toggleSearch}
-                className="p-2 rounded-full"
+                className="p-2 rounded-full absolute left-3 top-2 "
             >
             <IoSearchOutline />
             </button>
             
             {isOpen && ( // Si isOpen est True alors ces instructions seront exéxutées
-                <div className="absolute">
+                <div className="absolute left-3 top-2 right-2">
                     <input
                     type="text"
                     placeholder="Search"
