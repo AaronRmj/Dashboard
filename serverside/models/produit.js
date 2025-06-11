@@ -15,10 +15,14 @@ module.exports = function(sequelize, DataTypes) {// instance de sequelize io aha
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    Stock: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
+   Stock: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  validate: {
+    min: 0 // >= 0
+  }
+},
+
    Description: {
   type: DataTypes.STRING(50),
   allowNull: false,
@@ -28,7 +32,7 @@ Image: {
   type: Sequelize.STRING,
   allowNull: true
 },
- Reference: {
+ CodeBarre: {
       type: DataTypes.STRING(50),
       allowNull: false
     }
