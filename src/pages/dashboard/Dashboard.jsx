@@ -5,7 +5,7 @@ import { IoPeopleOutline } from "react-icons/io5";
 import { GoPackageDependencies } from "react-icons/go";
 import Stats from "./Stats";
 import BeneficeChart from "../../components/ui/BeneficeChart";
-
+import BestSellerChart from "../../components/ui/BestSellerChart";
 const Dashboard = () =>{
 
     const Statistics = [
@@ -22,8 +22,13 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <div className="flex-1 bg-white rounded-xl shadow-xl px-5">
-                <BeneficeChart />
+            <div className="flex-1 grid grid-cols-6 h-[60vh] bg-white rounded-xl shadow-xl px-5">
+                <div className="col-span-4">
+                    <BeneficeChart className="flex"/>
+                </div>
+                <div className="col-span-2 flex text-center items-center">
+                    <BestSellerChart className="" />
+                </div>
             </div>
         </div>
     )

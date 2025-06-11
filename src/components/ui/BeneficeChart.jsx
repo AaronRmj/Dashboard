@@ -200,7 +200,7 @@ const options = {
 
 
 return (
-    <Line data={data} options={options} />
+    <Line data={data} options={options} height={250} />
 );
 
 }
