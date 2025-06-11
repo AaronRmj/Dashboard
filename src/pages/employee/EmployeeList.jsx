@@ -149,6 +149,7 @@ const EmployeeList = () => {
             <Button onClick={openPopup} className="px-1" label="Ajouter un nouvel employé" />
           </div>
 
+
           {/* Barre de recherche */}
           <div className="flex justify-center my-4 mt-7 mb-5">
             <input

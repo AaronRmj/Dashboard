@@ -19,14 +19,19 @@ const QRCode = require('qrcode');
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
+
 /*
 db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+
   .then(() => {
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
   })
-  .catch(err => console.error(" Erreur synchronisation :", err)); // !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
+  .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 */
+
+
 
 const app = express();
 const PORT = process.env.PORT || 8080;

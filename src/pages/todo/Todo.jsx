@@ -1,5 +1,4 @@
 import React from "react";
-import {LineGraph} from '../../components/ui/LineGraph';
 const Todo = () =>{
     return(
         <div className="flex justify-center items-center h-screen bg-gray-100">
