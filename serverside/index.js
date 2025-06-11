@@ -71,16 +71,16 @@ app.get("/", (req, res) => {
     res.send("Hello");
 });
 const errhandler = err => console.log("Erreur : ", err);
-
+app.get("/Clients", async (req, res) => {
+    const clients = await db.client.findAll();
+    res.status(200).json(clients);
+});
 app.get("/Produit", async (req, res) => {
     const produits = await db.produit.findAll();
     res.status(200).json(produits); // .json() pour envoi des données après query sous forme json. **different de toJSON()
 });
 
-app.get("/Clients", async (req, res) => {
-    const clients = await db.client.findAll();
-    res.status(200).json(clients);
-});
+
 
 
 app.get("/Facture/:idFacture", async (req, res) =>{
@@ -133,6 +133,7 @@ app.get("/Employe", async (req, res) => {
     return res.status(403).json({ error: "Token invalide ou expiré" });
   }
 });
+
 
 
 //  Inscription
@@ -267,12 +268,32 @@ app.post('/forgot-password', async (req, res) => {
 
     await db.reset_code.create({ Email: email, Code: code,Role: role, ExpireAt: expireAt });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Voici votre de réinitialisation de mot de passe",
-      text: `Bonjour,\n\nVotre code de réinitialisation  est : ${code}\n\nCe code expirera dans 10 minutes.\n\n`
-    });
+   await transporter.sendMail({
+  from: process.env.EMAIL_USER,
+  to: email,
+  subject: "Réinitialisation de votre mot de passe - OptimaBusiness",
+  html: `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #4f46e5, #3b82f6); padding: 40px; color: #fff; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <h2 style="text-align: center;"> Réinitialisation de votre mot de passe</h2>
+    <p>Bonjour,</p>
+    <p>Vous avez demandé à réinitialiser votre mot de passe pour votre compte <strong>OptimaBusiness</strong>.</p>
+    <p style="margin: 20px 0; font-size: 20px; background: #fff; color: #3b82f6; padding: 15px; border-radius: 8px; text-align: center;">
+      <strong>Votre code de réinitialisation :</strong><br/>
+      <span style="font-size: 28px; letter-spacing: 4px;">${code}</span>
+    </p>
+    <p>Ce code est valable pendant <strong>10 minutes</strong>. Veuillez ne pas le partager avec quiconque.</p>
+    <p>Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer ce message ou contacter immédiatement notre support.</p>
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+    <p style="font-size: 12px; text-align: center;">Merci de votre confiance<br><strong>L'équipe OptimaBusiness</strong>
+    <br><strong>Contact : 🇲🇬 +261 34 28 904 14 </strong>
+    
+    </p>
+    
+
+  </div>
+  `
+});
+
 
     res.json({ message: "Code envoyé par email" });
 
