@@ -34,7 +34,7 @@ const Customers = () =>{
             }
             
             if (["Telephone"].includes(name)){
-                return {...prev, Client:{...prev.Client, [name]:parseInt(value,10) || 0}};
+                return {...prev, Client:{...prev.Client, [name]:value}};
             }
 
             if (["Date"].includes(name)){

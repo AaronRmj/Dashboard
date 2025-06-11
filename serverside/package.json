@@ -10,7 +10,9 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bwip-js": "^4.6.0",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
