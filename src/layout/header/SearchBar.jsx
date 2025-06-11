@@ -13,21 +13,21 @@ const SearchBar = () =>{
     };
 
     return(
-        <div className="flex items-center w-full lg:ml-36">
+        <div className="flex items-center w-full lg:ml-25">
             {/*icone de recherche*/}
             <button
                 onClick={toggleSearch}
-                className="p-2 rounded-full"
+                className="p-2 rounded-full absolute left-3 top-2 "
             >
             <IoSearchOutline />
             </button>
             
             {isOpen && ( // Si isOpen est True alors ces instructions seront exéxutées
-                <div className="absolute">
+                <div className="absolute left-3 top-2 right-2">
                     <input
                     type="text"
-                    placeholder="Search"
-                    className="bg-gray-100 rounded-md focus:outline-none p-2 px-4 focus:ring-2 focus:ring-blue-500 w-full py-2 border-gray-300"
+                    placeholder="Search .........."
+                    className="bg-gray-100 rounded-md focus:outline-none w-110 px-4 focus:ring-2 focus:ring-blue-500  py-2 text-sm border-gray-200"
                     />
                 </div>
             )}

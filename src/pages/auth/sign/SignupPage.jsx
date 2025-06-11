@@ -100,7 +100,7 @@ const SignupPage = () => {
             />
           </div>
 
-          <Button label="Sign up" onClick={handleSignup} />
+          <Button label="S'inscrire" onClick={handleSignup} />
 
           <div className="flex justify-between text-sm text-gray-400 w-full px-1">
             <span className="font-bold">Vous avez un compte ?</span>
