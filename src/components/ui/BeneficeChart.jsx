@@ -134,6 +134,11 @@ const options = {
         usePointStyle: true,
         pointStyle: 'circle',
         padding: 20,
+        font:{
+          family:"Urba",
+          size:18,
+        },
+        color:"#000"
       },
       display: true,
       position: "top",
@@ -200,7 +205,7 @@ const options = {
 
 
 return (
-    <Line data={data} options={options} />
+    <Line data={data} options={options} height={250} />
 );
 
 }
