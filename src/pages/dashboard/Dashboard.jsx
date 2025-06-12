@@ -22,11 +22,11 @@ const Dashboard = () =>{
             <div className="mx-auto lg:space-x-7 mb-6">
                 <Stats Statistics={Statistics} />
             </div>
-            <div className="flex-1 grid grid-cols-6 h-[60vh] bg-white rounded-xl shadow-xl px-5">
+            <div className="flex-1 grid grid-cols-6 h-[55vh] bg-white rounded-xl shadow-xl px-5">
                 <div className="col-span-4">
                     <BeneficeChart className="flex"/>
                 </div>
-                <div className="col-span-2 flex text-center items-center ">
+                <div className="col-span-2 flex text-center items-start m-5 ">
                     <BestSellerChart />
                 </div>
             </div>
