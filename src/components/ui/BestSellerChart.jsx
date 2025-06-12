@@ -16,7 +16,7 @@ ChartJS.register(
 
 const BestSellerChart = () => {
     const data = {
-        labels:['Café',"Tissu", "Sardines"],
+        labels:['Smartphone',"Laptop", "SmartTV"],
         datasets:[
             {
                 label:"Ventes",

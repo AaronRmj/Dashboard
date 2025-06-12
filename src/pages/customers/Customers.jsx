@@ -203,15 +203,11 @@ const Customers = () =>{
                                     )
                                 }
                                 </tbody>
-                                {/* <div className="flex w-60 justify-between absolute lg:right-25 mb-72">
-                                        <button className="text-blue-800">+ Add item</button>
-                                        <p>Total Amount</p>
-                                        <p>$40</p>
-                                </div> */}
+                                
                             </table>
 
                                 <div>
-                                    <Button label="+++" onClick={addRow}/>
+                                    <Button label="Ajouter items" onClick={addRow} type="button"/>
                                 </div>
 
                             <div>
