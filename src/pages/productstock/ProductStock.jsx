@@ -77,7 +77,7 @@ const ProductsStock = () => {
           </div>
 
           {/* Affichage Desktop */}
-          <section className="bg-white rounded-xl shadow-md p-4 hidden md:block">
+          <section className="bg-white rounded-xl h-[100vh] shadow-md p-4 hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-center">
                 <thead>

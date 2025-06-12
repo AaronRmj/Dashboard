@@ -43,7 +43,7 @@ const UserInfo = () => {
  
   <div
     onClick={() => setShowMore((v) => !v)}
-    className="flex items-center justify-between bg-gray-100 border border-sky-200 rounded-xl px-6 py-[1.05px] shadow-sm cursor-pointer w-full hover:shadow-md transition duration-300"
+    className="flex relative items-center justify-between bg-white rounded-sm px-6 py-[1.05px] shadow-sm cursor-pointer w-full transition duration-300"
   >
     <div className="flex items-center space-x-4">
       {user.photoUrl ? (
@@ -56,7 +56,7 @@ const UserInfo = () => {
         <FaUserCircle className="w-8 h-8 text-gray-400" />
       )}
       <div className="flex flex-col mr-15 ">
-        <span className="font-medium text-sm break-words text-gray-800 font-semibold">{user.name}</span>
+        <span className=" text-sm break-words text-gray-800 font-semibold">{user.name}</span>
         {user.role === "employe" && user.username && (
           <span className="text-xs text-gray-500 break-words">{user.username}</span>
         )}
@@ -67,7 +67,7 @@ const UserInfo = () => {
     </div>
     <FiChevronDown
       size={20}
-      className={`text-gray-500 transition-transform duration-300 ml-18 ${showMore ? "rotate-180" : ""}`}
+      className={`text-gray-500 animate-pulse transition-transform duration-300 ml-18 ${showMore ? "rotate-180" : ""}`}
     />
   </div>
 
@@ -75,7 +75,7 @@ const UserInfo = () => {
   {showMore && (
     <div
       ref={panelRef}
-      className="absolute top-11 left-37 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-200 w-75 p-6 z-50 transition-all duration-500 scale-100 opacity-100"
+      className="absolute top-11 left-40 transform -translate-x-1/2 bg-white rounded-sm shadow-xl border border-gray-200 w-80 p-6 z-50 transition-all duration-500 scale-100 opacity-100"
     >
       <button
         onClick={() => setShowMore(false)}

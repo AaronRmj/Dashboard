@@ -22,17 +22,15 @@ db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
-/*
-db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+
+/*db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
   .then(() => {
     console.log(" Synchronisation Sequelize ");
     console.log("Modèles chargés :", Object.keys(db));
   })
 
-  .catch(err => console.error(" Erreur synchronisation :", err));// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
-*/
-
+  .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
 
 const app = express();
@@ -632,6 +630,7 @@ app.post("/Vente", async (req, res) => {
             return res.status(400).json({ error: "Le champ 'Produits' doit être un tableau" });
         }
 
+        console.log(req.body)
         // Gestion du client
         const { Telephone } = req.body.Client;
         const clientExists = await db.client.findOne({ where: { Tel: Telephone } });
@@ -657,6 +656,20 @@ app.post("/Vente", async (req, res) => {
             if (isNaN(quantite) || isNaN(codeProduit) || isNaN(numEmploye) || !Date) {
                 return res.status(400).json({ error: "Données de produit invalides" });
             }
+            console.log(codeProduit);
+            // Mise à jour du stock
+            const produitStock = await db.produit.findOne({ where: { IdProduit: codeProduit } });
+            if (!produitStock) {
+                return res.status(404).json({ error: "Produit introuvable" });
+            }
+            else if((produitStock.Stock - quantite)<0)
+            {
+                return res.status(400).json({ error: "Stock Insuffisant pour la transaction" });
+            }
+            await db.produit.update(
+                { Stock: produitStock.Stock - quantite },
+                { where: { IdProduit: codeProduit } }
+            );
 
             // Création de la vente
             await db.vente.create({ 
@@ -665,17 +678,7 @@ app.post("/Vente", async (req, res) => {
                 CodeProduit: codeProduit, 
                 NumFacture, 
                 NumEmploye: numEmploye 
-            });
-
-            // Mise à jour du stock
-            const produitStock = await db.produit.findOne({ where: { IdProduit: codeProduit } });
-            if (!produitStock) {
-                return res.status(404).json({ error: "Produit introuvable" });
-            }
-            await db.produit.update(
-                { Stock: produitStock.Stock - quantite },
-                { where: { IdProduit: codeProduit } }
-            );
+            });      
         }
 
         res.status(201).json({ message: "Facture créée avec succès", NumFacture });

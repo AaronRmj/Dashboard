@@ -7,7 +7,7 @@ import Label from "../../components/ui/Label";
 
 const Customers = () =>{
     const [inVoice, setInVoiceOpen] = useState(false);
-
+    const [sucess, setSuccess] = useState(false);
     const [formData, setFormData] = useState({
         Client:{
             Nom:"",
@@ -15,37 +15,47 @@ const Customers = () =>{
             Adresse:"",
             Email:"",
         },
-        Produit:{
-            Quantite:"",
-            Date:"",
-            CodeProduit:"",
-            NumEmploye:""   
-        },
+        Produit:[
+            {
+                Quantite:"",
+                Date:"",
+                CodeProduit:"",
+                NumEmploye:""
+            }   
+        ]
     })
     
 
+    const ProduitChange = (index, name, value) => {
+        console.log(index, name);
+        setFormData((prev) => {
+            const UpdatedProduits = [...prev.Produit];
+            UpdatedProduits[index] = {...UpdatedProduits[index], [name] : value};
+            return {...prev, Produit : UpdatedProduits}
+        });
+        console.log(formData);
+    };
 
-    const handleChange = (e) =>{
+    const ClientChange = (e) =>{
         const {name,value} = e.target;
-        setFormData((prev) =>{
-            // Si `name` est un des éléments dans le tableau, exécute ce bloc
-            if (["Nom","Adresse", "Email"].includes(name)){
-                return { ...prev, Client:{...prev.Client, [name]:value }};
-            }
-            
-            if (["Telephone"].includes(name)){
-                return {...prev, Client:{...prev.Client, [name]:value}};
-            }
-
-            if (["Date"].includes(name)){
-                return{...prev, Produit:{...prev.Produit, [name]:value}}
-            }
-
-            if (["Quantite", "CodeProduit", "NumEmploye"].includes(name))
-                return { ...prev, Produit:{...prev.Produit, [name]:parseInt(value, 10) || 0 }};
-            return {...prev, [name]:value};
-        })
+        setFormData((prev) => ({...prev, Client:{...prev.Client, [name]:value}}));
+        console.log(formData);
     }
+    
+    const addRow = () => {
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            Produit: [
+                ...prevFormData.Produit,
+                {
+                    Quantite:"",
+                    Date:"",
+                    CodeProduit:"",
+                    NumEmploye:""   
+                }
+            ]
+        }));
+    };
 
     const handleInvoice = () =>{
         setInVoiceOpen(true);
@@ -61,7 +71,7 @@ const Customers = () =>{
         
         const dataToSend = {
           Client: formData.Client,
-          Produits: [formData.Produit] //avadika tableau satria zay no raisin ny backend
+          Produits: formData.Produit
         }
 
         try{
@@ -74,17 +84,16 @@ const Customers = () =>{
 
             })
             if (!response.ok) {
-                throw new Error("Erreur lors de la création de la facture");
+                const erreur = await response.json();
+                throw new Error(`${erreur.error}`);
             }
-
+            
             const data = await response.json();
-            console.log("facture crée avec succes", data);
-            alert("Facture crée avec succès!");
+            alert(data.message);
             setInVoiceOpen(false);
         }
         catch (error) {
-            console.error("Erreur de la soumission",error);
-            alert('Echec de l\'envoie des données');
+            alert(error);
         }
     }
 
@@ -113,7 +122,7 @@ const Customers = () =>{
                                  placeholder="ex: Jon snow"
                                  name="Nom"
                                  value={formData.Client.Nom}
-                                 onChange={handleChange}  
+                                 onChange={ClientChange}  
                                  />
                             </div>
                               <Label
@@ -121,7 +130,7 @@ const Customers = () =>{
                                   placeholder="ex : GameOfThrones@gmail.com"
                                   name="Email"
                                   value={formData.Client.Email}
-                                  onChange={handleChange}
+                                  onChange={ClientChange}
                                   />
                             <div>
                                 <label className="block text-gray-700 font-thin mb-1">Numéro / Adresse du Client</label>
@@ -129,14 +138,14 @@ const Customers = () =>{
                                     placeholder="ex: +261383008728"
                                     name="Telephone"
                                     value={formData.Client.Telephone}
-                                    onChange={handleChange}
+                                    onChange={ClientChange}
                                     
                                     />
                                     
                                 <Label placeholder="ex: Winterfell, nord"
                                     name="Adresse"
                                     value={formData.Client.Adresse}
-                                    onChange={handleChange}
+                                    onChange={ClientChange}
                                     />
                             </div>
                             {/* <label className="text-lg">Issued on </label>  */}
@@ -152,14 +161,15 @@ const Customers = () =>{
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="text-left">
+                                {formData.Produit.map((item, index) => (
+                                    <tr key = {index} className="text-left">
                                         <td><Label
                                             inputClassName="border-none"
                                             placeholder="6"
                                             name="CodeProduit"
                                             type="number"
-                                            value={formData.Produit.CodeProduit}
-                                            onChange={handleChange}
+                                            value={item.CodeProduit}
+                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value )}
                                             />
                                             
                                         </td>
@@ -167,8 +177,8 @@ const Customers = () =>{
                                             inputClassName="border-none"
                                             type="date"
                                             name="Date"
-                                            value={formData.Produit.Date}
-                                            onChange={handleChange}
+                                            value={item.Date}
+                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}
                                          />
                                          </td>
                                         <td><Label 
@@ -176,30 +186,32 @@ const Customers = () =>{
                                             placeholder="2"
                                             name="Quantite"
                                             type="number"
-                                            value={formData.Produit.Quantite}
-                                            onChange={handleChange}
-                                                        
+                                            value={item.Quantite}
+                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}         
                                          />
-                                         </td>
-                                        <td><Label 
-                                            inputClassName="border-none" 
-                                            placeholder="3"
-                                            type="number"
-                                            name="NumEmploye"
-                                            value={formData.Produit.NumEmploye}
-                                            onChange={handleChange}
-                                        />
                                         </td>
-                                    </tr>
+                                        <td><Label
+                                            inputClassName="border-none"
+                                            placeholder="1"
+                                            name="NumEmploye"
+                                            type="number"
+                                            value={item.NumEmploye}
+                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}
+                                        />   
+                                        </td>      
+                                    </tr>)
+                                    )
+                                }
                                 </tbody>
-                                {/* <div className="flex w-60 justify-between absolute lg:right-25 mb-72">
-                                        <button className="text-blue-800">+ Add item</button>
-                                        <p>Total Amount</p>
-                                        <p>$40</p>
-                                </div> */}
+                                
                             </table>
+
+                                <div>
+                                    <Button label="Ajouter items" onClick={addRow} type="button"/>
+                                </div>
+
                             <div>
-                                <Button label="Create Invoice" type="submit"/>
+                                <Button label="Effectuer Vente" type="submit"/>
                             </div>
                     </form>
                 </section>

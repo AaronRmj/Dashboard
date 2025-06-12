@@ -41,7 +41,10 @@ const months = [
 ]
 
 const BeneficeChart = () =>{
-  const [chartData , setChartData] = useState([]);
+  const [chartData , setChartData] = useState({
+    benefices: [],
+    ca: [],
+  });
 
   const fetchBeneficeMois = async (startDate, endDate) =>{
     try{ 
@@ -51,16 +54,28 @@ const BeneficeChart = () =>{
         body:JSON.stringify({StartDate:startDate, EndDate: endDate}),
       });
       const data = await response.json();
-      return data.Benefice ?? 0;
+
+      return {
+        ca: data.CA ?? 0,
+        benefices: data.Benefice ?? 0,
+      };
+
+
+
     }
     catch(error){
       console.error(" Erreur lors du fetch du bénéfice :", error);
+      return {ca:0 , benefices:0}
     }
   }
    useEffect(()=>{
       const loadChartData = async () =>{
-        const benefices = await Promise.all( months.map(({start,end}) => fetchBeneficeMois(start, end)));
-        setChartData(benefices);
+        const resultats = await Promise.all( months.map(({start,end}) => fetchBeneficeMois(start, end)));
+        
+        const benefices = resultats.map((r) => r.benefices);
+        const ca = resultats.map((r) => r.ca);
+
+        setChartData({benefices, ca});
       
       };
       loadChartData();
@@ -73,7 +88,7 @@ const data = {
   datasets: [
     {
       label: 'Bénefice net',
-      data: chartData,
+      data: chartData.benefices,
       tension: 0.4,
       borderWidth: 1,
       borderColor: '#3B82F6',
@@ -90,21 +105,21 @@ const data = {
         above: 'rgba(59, 130, 246, 0.2)'
       },
     },
-    // {
-    //   label: 'Chiffre d affaire',
-    //   data: [0, 50, 70, 100, 350, 300, 250, 200, 120 , 130 , 150, 200 ],
-    //   tension: 0.4,
-    //   borderWidth: 1,
-    //   borderColor: '#8B5CF6',
-    //   backgroundColor: 'rgba(139, 92, 246, 0.8)',
-    //   pointBackgroundColor: '#3B82F6',
-    //   pointRadius: 0,
-    //   pointHoverRadius: 6,
-    //   fill: {
-    //     target: 'origin',
-    //     above: 'rgba(139, 92, 246, 0.2)'
-    //   },
-    // }
+    {
+      label: "Chiffre d'affaire",
+      data: chartData.ca,
+      tension: 0.4,
+      borderWidth: 1,
+      borderColor: '#8B5CF6',
+      backgroundColor: 'rgba(139, 92, 246, 0.8)',
+      pointBackgroundColor: '#3B82F6',
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      fill: {
+        target: 'origin',
+        above: 'rgba(139, 92, 246, 0.2)'
+      },
+    }
 
   ]
 };
@@ -119,6 +134,11 @@ const options = {
         usePointStyle: true,
         pointStyle: 'circle',
         padding: 20,
+        font:{
+          family:"Urba",
+          size:18,
+        },
+        color:"#000"
       },
       display: true,
       position: "top",
@@ -168,9 +188,9 @@ const options = {
       },
       beginAtZero: true,
       min: 0,
-      max: 6000000,
+      max: 100000000,
       ticks: {
-        stepSize: 1000000,
+        stepSize: 10000000,
         font:{
           family:"Urba",
           weight:"500",
@@ -185,7 +205,7 @@ const options = {
 
 
 return (
-    <Line data={data} options={options} />
+    <Line data={data} options={options} height={150} />
 );
 
 }
