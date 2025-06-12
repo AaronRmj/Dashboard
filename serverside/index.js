@@ -35,8 +35,9 @@ db.sequelize.authenticate()
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = "tonSecretJWTUltraSecurise";
 
+console.log("Valeur de JWT_SECRET :", JWT_SECRET);
 
 // Middlewares fonction avec execution  obtient et renvoie reponse 
 app.use(cors());
@@ -64,8 +65,8 @@ const upload = multer({ storage });
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user:  "optimabusiness10@gmail.com",
+    pass: "benfxsscpkjrdlbh"
   }
 });
 
