@@ -67,11 +67,11 @@ const LoginPage = () => {
   return (
 
     
-    <div className="bg-gradient-to-r from-blue-50 to-gray-100 h-screen flex justify-center items-center">
+    <div className="bg-white h-screen flex justify-center items-center">
       
          
       {popupVisible && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white border border-green-200 text-green-700 px-6 py-4 rounded-md shadow-md w-80 text-center animate-fadeInDown">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white border border-green-200 text-green-700 px-6 py-4 rounded-md w-80 text-center animate-fadeInDown">
           <div className="flex items-center justify-center gap-2 mb-1">
             <MdCheckCircle className="text-xl" />
             <span className="font-semibold">Connexion réussie</span>
@@ -84,7 +84,7 @@ const LoginPage = () => {
       )}
      
 
-      <div className="grid grid-cols-2 shadow-xl bg-white rounded-lg w-6/7 relative ">
+      <div className="grid grid-cols-2 bg-white rounded-lg w-6/7 relative ">
        
         <div className="p-8 flex flex-col justify-center h-full">
           <div className="flex justify-center items-center mb-4 ml-25">

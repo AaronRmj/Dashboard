@@ -36,18 +36,18 @@ const SignupPage = () => {
   };
 
   return (
-    <section className="h-screen bg-gradient-to-r from-blue-50 to-gray-100 flex justify-center items-center mb-5 relative">
+    <section className="h-screen bg-white flex justify-center items-center mb-5 relative">
 
       {/*  POPUP */}
       {popupVisible && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white border border-green-200 text-green-700 px-6 py-3 rounded-md shadow-md flex items-center gap-3 animate-fadeInDown">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white border border-green-200 text-green-700 px-6 py-3 rounded-md  flex items-center gap-3 animate-fadeInDown">
          
           <MdCheckCircle className="text-xl" />
           <span>Inscription réussie ! Redirection en cours  </span> <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 
-      <div className="grid grid-cols-2 w-3/4 shadow-md bg-white rounded-lg overflow-hidden">
+      <div className="grid grid-cols-2 w-3/4 bg-white rounded-lg overflow-hidden">
         <div className="p-10 space-y-7 h-full">
           <div className="pt-4">
             <h1 className="text-center text-3xl font-thin tracking-wide">

@@ -25,7 +25,7 @@ const Sidebar = ({ isSidebarOpen }) => {
     { label: "Fournisseurs", to: "/StockSuppliers", icon: <CiBag1 /> },
     { label: "Gérer stocks", to: "/ProductsStock", icon: <MdOutlineInventory /> },
     { label: "Historique ", to: "/History", icon: <MdHistory /> },
-    { label: "Liste des tâches", to: "/Todo", icon: <GrTask /> },
+    { label: "Presence Employes", to: "/Todo", icon: <GrTask /> },
     { label: "Chat", to: "/Inbox", icon: <FaRegMessage /> },
   ];
 
