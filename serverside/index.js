@@ -603,6 +603,23 @@ app.get('/user-info', authMiddleware, async (req, res) => {
 });
 
 
+app.post('/Employe/check-email', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const employe = await db.employe.findOne({ where: { Email: email } });
+
+    if (employe) {
+      res.json({ exists: true });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification de l\'email:', error);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
 //VENTE
 
 app.post("/Vente", async (req, res) => {
