@@ -188,9 +188,9 @@ const options = {
       },
       beginAtZero: true,
       min: 0,
-      max: 6000000,
+      max: 100000000,
       ticks: {
-        stepSize: 1000000,
+        stepSize: 10000000,
         font:{
           family:"Urba",
           weight:"500",
