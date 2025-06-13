@@ -52,18 +52,12 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer gerance ficher image reetra +lire acceder enregitre 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
+  destination: (req, file, cb) => cb(null,path.join(__dirname, 'uploads')),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const uniqueName = `photo-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+    const uniqueName = `file-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
     cb(null, uniqueName);
-  }
+  },
 });
 const upload = multer({ storage });
 
@@ -850,7 +844,7 @@ app.post("/Achat", upload.single("file"), async (req, res) => {
         Stock: quantiteNum,
         PAunitaire: pachatNum,
         PVunitaire: pventeNum,
-        Image: imageProduit ? `/uploads/${imageProduit}` : null,
+        Image: imageProduit ? `/uploads${imageProduit}` : null,
         CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
       }, { transaction });
     }
