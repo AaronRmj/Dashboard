@@ -52,7 +52,13 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer gerance ficher image reetra +lire acceder enregitre 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     const uniqueName = `photo-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
@@ -750,7 +756,8 @@ app.post('/update-photo', upload.single('photo'), async (req, res) => {
 });
 
 
-app.post("/Achat", upload.any(), async (req, res) => {
+app.post("/Achat", upload.single("file"), async (req, res) => {
+  console.log("Fichier reçu :", req.file);
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -799,72 +806,70 @@ app.post("/Achat", upload.any(), async (req, res) => {
     // Traitement des produits + achats
     const achatsEffectues = [];
 
-    for (let i = 0; i < produits.length; i++) {
-      const { NomProduit, Quantite, Pachat, Pvente } = produits[i];
-      const quantiteNum = Number(Quantite);
-      const pachatNum = Number(Pachat);
-      const pventeNum = Number(Pvente);
+    // On suppose un seul produit et une seule image
+    const { NomProduit, Quantite, Pachat, Pvente } = produits[0];
+    const quantiteNum = Number(Quantite);
+    const pachatNum = Number(Pachat);
+    const pventeNum = Number(Pvente);
 
-      const fichier = req.files[i];
-      const imageProduit = fichier ? fichier.filename : null;
+    const imageProduit = req.file ? req.file.filename : null;
 
-      // Générer code-barres
-      const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
-      const codeBarreTexte = hash.toUpperCase();
+    // Générer code-barres
+    const hash = require('crypto').createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
+    const codeBarreTexte = hash.toUpperCase();
 
-      const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
-      if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
-      const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
+    const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
+    if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
+    const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
 
-      if (!fs.existsSync(codeBarreImagePath)) {
-        const buffer = await bwipjs.toBuffer({
-          bcid: 'code128',
-          text: codeBarreTexte,
-          scale: 3,
-          height: 10,
-          includetext: true,
-          textxalign: 'center',
-        });
-        fs.writeFileSync(codeBarreImagePath, buffer);
-      }
-
-      // Trouver produit existant
-      let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
-
-      if (produit) {
-        produit.Stock += quantiteNum;
-        if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
-        if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
-        if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
-        produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
-        await produit.save({ transaction });
-      } else {
-        produit = await db.produit.create({
-          Description: NomProduit,
-          Stock: quantiteNum,
-          PAunitaire: pachatNum,
-          PVunitaire: pventeNum,
-          Image: imageProduit ? `/uploads/${imageProduit}` : null,
-          CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
-        }, { transaction });
-      }
-
-      const achat = await db.achat.create({
-        NomProduit,
-        Quantite: quantiteNum,
-        Date,
-        InfoFournisseur: fournisseur.Entreprise,
-      }, { transaction });
-
-      achatsEffectues.push({
-        fournisseur: InfoFournisseur,
-        produit: NomProduit,
-        quantite: quantiteNum,
-        codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
-        image: imageProduit ? `/uploads/${imageProduit}` : null,
-        achatId: achat.id,
+    if (!fs.existsSync(codeBarreImagePath)) {
+      const buffer = await bwipjs.toBuffer({
+        bcid: 'code128',
+        text: codeBarreTexte,
+        scale: 3,
+        height: 10,
+        includetext: true,
+        textxalign: 'center',
       });
+      fs.writeFileSync(codeBarreImagePath, buffer);
     }
+
+    // Trouver produit existant
+    let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
+
+    if (produit) {
+      produit.Stock += quantiteNum;
+      if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
+      if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
+      if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
+      produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
+      await produit.save({ transaction });
+    } else {
+      produit = await db.produit.create({
+        Description: NomProduit,
+        Stock: quantiteNum,
+        PAunitaire: pachatNum,
+        PVunitaire: pventeNum,
+        Image: imageProduit ? `/uploads/${imageProduit}` : null,
+        CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+      }, { transaction });
+    }
+
+    const achat = await db.achat.create({
+      NomProduit,
+      Quantite: quantiteNum,
+      Date,
+      InfoFournisseur: fournisseur.Entreprise,
+    }, { transaction });
+
+    achatsEffectues.push({
+      fournisseur: InfoFournisseur,
+      produit: NomProduit,
+      quantite: quantiteNum,
+      codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+      image: imageProduit ? `/uploads/${imageProduit}` : null,
+      achatId: achat.id,
+    });
 
     await transaction.commit();
     return res.status(201).json({
@@ -899,7 +904,9 @@ app.post("/Benefice", async (req, res)=>{
         let totalQuantite = 0;
         // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
         for(i of Produit)
-        {
+        {        // ...existing code...
+        const imageProduit = req.file ? req.file.filename : null;
+        // ...existing code...
             totalQuantite += i["Quantite"];
         }
         const CA = totalQuantite * prixVente.PVunitaire; 
