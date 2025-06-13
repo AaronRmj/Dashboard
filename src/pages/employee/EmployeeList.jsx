@@ -170,7 +170,7 @@ const EmployeeList = () => {
                 >
                   <div>
                     <img
-                      src={`http://localhost:8080/uploads/${employee.Photo}`}
+                      src={`http://localhost:8080/${employee.Photo}`} // tsisy uploads tsony ze otranio reetra 
                       alt="Profil"
                       className="rounded-full w-35 h-35 mx-auto object-cover mb-4 border-2 border-gray-400"
                     />
@@ -186,7 +186,7 @@ const EmployeeList = () => {
 
                   <div className="mt-6 relative group w-fit mx-auto">
                     <img
-                      src={`http://localhost:8080/uploads/${employee.QRCodePath}`}
+                      src={`http://localhost:8080/${employee.QRCodePath}`}
                       alt="QR Code"
                       className="w-24 h-24 border border-gray-300 rounded transition duration-300 group-hover:brightness-75"
                     />

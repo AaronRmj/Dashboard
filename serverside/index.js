@@ -52,13 +52,14 @@ if (!fs.existsSync(uploadDir)) {
 
 // Multer gerance ficher image reetra +lire acceder enregitre 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
+  destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     const uniqueName = `photo-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
     cb(null, uniqueName);
   }
 });
+
 const upload = multer({ storage });
 
 // Transport mail
@@ -435,39 +436,35 @@ app.post('/ajouter-employe', authMiddleware, upload.single("photo"), async (req,
       tel, poste, salaire, motdepasse
     } = req.body;
 
-    const photoPath = req.file ? req.file.filename : null;
+    // Correction ici : stocker le chemin relatif pour usage React/Electron
+    const photoPath = req.file ? `uploads/${req.file.filename}` : null;
 
-    //regex 
-    
-    
+    // Vérification des champs requis
     if (!nom || !username || !adresse || !email || !tel || !poste || !salaire || !motdepasse || !photoPath) {
       return res.status(400).json({ error: "Tous les champs sont requis et la photo est obligatoire." });
     }
 
+    // Regex validation
     const passwordRegex = /^[A-Za-z0-9]{6,}$/;
     if (!passwordRegex.test(motdepasse)) {
       return res.status(400).json({
         error: "Le mot de passe doit contenir au moins 6 caractères alphanumériques sans caractères spéciaux."
       });
     }
-   
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (!emailRegex.test(email)) {
-  return res.status(400).json({ error: "Adresse email invalide." });
-}
-    // verification lo z olona connecte apidtr employe mb iraccordena azy ao @ entreprise 
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Adresse email invalide." });
+    }
+
+    // Vérification administrateur connecté
     const admin = await db.admin.findByPk(req.user.id);
     if (!admin) {
       return res.status(404).json({ error: "Administrateur introuvable." });
     }
 
-    // Normalisation
     const nomEntreprise = admin.NomEntreprise.trim().toLowerCase();
     const emailCheck = email.trim().toLowerCase();
-
-    console.log("==> Débogage avant findOne");
-    console.log("Nom entreprise (admin):", nomEntreprise);
-    console.log("Email saisi:", emailCheck);
 
     const existant = await db.employe.findOne({
       where: {
@@ -476,18 +473,15 @@ if (!emailRegex.test(email)) {
       }
     });
 
-    console.log("Résultat existant:", existant);
-
     if (existant) {
       return res.status(400).json({
         error: "Cet email est déjà utilisé dans cette entreprise."
       });
     }
 
-
     const hashedPassword = await bcrypt.hash(motdepasse, 10);
 
-    // generation matricule auto selon id dans l entreprise fa ts id ao amn bd 
+    // Génération du matricule
     const employeCount = await db.employe.count({
       where: { NomEntreprise: nomEntreprise }
     });
@@ -496,6 +490,7 @@ if (!emailRegex.test(email)) {
     const suffixEntreprise = nomEntreprise.replace(/\s+/g, '-');
     const matricule = `${numeroMatricule}-${suffixEntreprise}`;
 
+    // Création de l'employé dans la base
     const nouvelEmploye = await db.employe.create({
       Nom: nom,
       UserName: username,
@@ -505,33 +500,35 @@ if (!emailRegex.test(email)) {
       Poste: poste,
       Salaire: salaire,
       Mdp: hashedPassword,
-      Photo: photoPath,
-      QRCodePath: "",
+      Photo: photoPath, // Correction ici : chemin relatif
+      QRCodePath: "", // sera mis à jour après génération QR
       NomEntreprise: nomEntreprise,
       Matricule: matricule
     });
 
-    // meme methode que l image sur inscription 
+    // Génération QR code
     const qrFolderPath = path.join(__dirname, 'uploads/employe-qr');
     if (!fs.existsSync(qrFolderPath)) {
       fs.mkdirSync(qrFolderPath, { recursive: true });
     }
 
-    // generation qrcode asina mail satria iny no maha unique azy ao amn entreprise 1 
     const qrData = nouvelEmploye.Email;
     const qrFileName = `qr-${Date.now()}.png`;
     const qrCodePath = path.join(qrFolderPath, qrFileName);
 
     await QRCode.toFile(qrCodePath, qrData);
 
-    // Maj du chemin alefa anaty bd 
-    await nouvelEmploye.update({ QRCodePath: `employe-qr/${qrFileName}` });
+    // Correction : chemin relatif pour React/Electron
+    const qrRelativePath = `uploads/employe-qr/${qrFileName}`;
+
+    await nouvelEmploye.update({ QRCodePath: qrRelativePath });
 
     return res.status(201).json({
       message: "Employé ajouté avec succès.",
       id: nouvelEmploye.IdEmploye,
       matricule: matricule,
-      qrCode: `http://localhost:8080/uploads/employe-qr/${qrFileName}`
+      photoUrl: `http://localhost:8080/${photoPath}`, // URL complète
+      qrCode: `http://localhost:8080/${qrRelativePath}` // URL complète
     });
 
   } catch (err) {
@@ -540,22 +537,20 @@ if (!emailRegex.test(email)) {
         error: "Un employé avec cet email existe déjà dans cette entreprise."
       });
     }
-    
-   if (err.name === 'SequelizeValidationError') {
-    // Traduction humaine des erreurs Sequelize   mety ilaina ko amn manaraka 
-    const messages = err.errors.map(e => {
-      if (e.message.includes("isEmail")) return "Adresse email invalide.";
-      return e.message;
-    });
 
-    return res.status(400).json({ error: messages.join(", ") });
+    if (err.name === 'SequelizeValidationError') {
+      const messages = err.errors.map(e => {
+        if (e.message.includes("isEmail")) return "Adresse email invalide.";
+        return e.message;
+      });
+
+      return res.status(400).json({ error: messages.join(", ") });
+    }
+
+    console.error("Erreur lors de l'ajout de l'employé :", err);
+    return res.status(500).json({ error: "Erreur serveur." });
   }
-
-  console.error("Erreur lors de l'ajout de l'employé :", err);
-  return res.status(500).json({ error: "Erreur serveur." });
-}
 });
-  
 
 
 
