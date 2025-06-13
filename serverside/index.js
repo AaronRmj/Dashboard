@@ -18,12 +18,12 @@ const bwipjs = require('bwip-js');
 
 
 // Connexion à la BD
-db.sequelize.authenticate()
+/*db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
 
-/*db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
   .then(() => {
     console.log(" Synchronisation Sequelize ");
@@ -750,8 +750,7 @@ app.post('/update-photo', upload.single('photo'), async (req, res) => {
 });
 
 
-app.post("/Achat", upload.single("file"), async (req, res) => {
-  console.log("Fichier reçu :", req.file);
+app.post("/Achat", upload.any(), async (req, res) => {
   const transaction = await db.sequelize.transaction();
 
   try {
@@ -800,70 +799,72 @@ app.post("/Achat", upload.single("file"), async (req, res) => {
     // Traitement des produits + achats
     const achatsEffectues = [];
 
-    // On suppose un seul produit et une seule image
-    const { NomProduit, Quantite, Pachat, Pvente } = produits[0];
-    const quantiteNum = Number(Quantite);
-    const pachatNum = Number(Pachat);
-    const pventeNum = Number(Pvente);
+    for (let i = 0; i < produits.length; i++) {
+      const { NomProduit, Quantite, Pachat, Pvente } = produits[i];
+      const quantiteNum = Number(Quantite);
+      const pachatNum = Number(Pachat);
+      const pventeNum = Number(Pvente);
 
-    const imageProduit = req.file ? req.file.filename : null;
+      const fichier = req.files[i];
+      const imageProduit = fichier ? fichier.filename : null;
 
-    // Générer code-barres
-    const hash = require('crypto').createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
-    const codeBarreTexte = hash.toUpperCase();
+      // Générer code-barres
+      const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
+      const codeBarreTexte = hash.toUpperCase();
 
-    const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
-    if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
-    const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
+      const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
+      if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
+      const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
 
-    if (!fs.existsSync(codeBarreImagePath)) {
-      const buffer = await bwipjs.toBuffer({
-        bcid: 'code128',
-        text: codeBarreTexte,
-        scale: 3,
-        height: 10,
-        includetext: true,
-        textxalign: 'center',
-      });
-      fs.writeFileSync(codeBarreImagePath, buffer);
-    }
+      if (!fs.existsSync(codeBarreImagePath)) {
+        const buffer = await bwipjs.toBuffer({
+          bcid: 'code128',
+          text: codeBarreTexte,
+          scale: 3,
+          height: 10,
+          includetext: true,
+          textxalign: 'center',
+        });
+        fs.writeFileSync(codeBarreImagePath, buffer);
+      }
 
-    // Trouver produit existant
-    let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
+      // Trouver produit existant
+      let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
 
-    if (produit) {
-      produit.Stock += quantiteNum;
-      if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
-      if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
-      if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
-      produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
-      await produit.save({ transaction });
-    } else {
-      produit = await db.produit.create({
-        Description: NomProduit,
-        Stock: quantiteNum,
-        PAunitaire: pachatNum,
-        PVunitaire: pventeNum,
-        Image: imageProduit ? `/uploads${imageProduit}` : null,
-        CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+      if (produit) {
+        produit.Stock += quantiteNum;
+        if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
+        if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
+        if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
+        produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
+        await produit.save({ transaction });
+      } else {
+        produit = await db.produit.create({
+          Description: NomProduit,
+          Stock: quantiteNum,
+          PAunitaire: pachatNum,
+          PVunitaire: pventeNum,
+          Image: imageProduit ? `/uploads/${imageProduit}` : null,
+          CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+        }, { transaction });
+      }
+
+      const achat = await db.achat.create({
+        NomProduit,
+        Quantite: quantiteNum,
+        Date,
+        InfoFournisseur: fournisseur.Entreprise,
       }, { transaction });
+
+      achatsEffectues.push({
+        fournisseur: InfoFournisseur,
+        produit: NomProduit,
+        quantite: quantiteNum,
+        codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+        image: imageProduit ? `/uploads/${imageProduit}` : null,
+        achatId: achat.id,
+      });
     }
-
-    const achat = await db.achat.create({
-      NomProduit,
-      Quantite: quantiteNum,
-      Date,
-      InfoFournisseur: fournisseur.Entreprise,
-    }, { transaction });
-
-    achatsEffectues.push({
-      fournisseur: InfoFournisseur,
-      produit: NomProduit,
-      quantite: quantiteNum,
-      codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
-      image: imageProduit ? `/uploads/${imageProduit}` : null,
-      achatId: achat.id,
-    });
 
     await transaction.commit();
     return res.status(201).json({
@@ -877,6 +878,7 @@ app.post("/Achat", upload.single("file"), async (req, res) => {
     return res.status(500).json({ error: "Une erreur est survenue", details: error.message });
   }
 });
+
 
 // BENEFICE total ou par produit ou par date
 app.post("/Benefice", async (req, res)=>{
