@@ -12,9 +12,9 @@ let backendProcess;
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1000,
-    height: 700,
-    icon:path.join(__dirname, 'assets', 'favicon.ico'),
+    width: 1200,
+    height: 800,
+    icon:path.join(__dirname, 'assets', 'logo.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

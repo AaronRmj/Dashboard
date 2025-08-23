@@ -24,12 +24,19 @@ module.exports = function(sequelize, DataTypes) {
     NomEntreprise: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique : true
+      unique: true
     },
-    
+    Telephone: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    Adresse: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
     Photo: {
       type: DataTypes.STRING,
-      allowNull: true // optionnel
+      allowNull: true
     }
   }, {
     sequelize,

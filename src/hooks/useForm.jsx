@@ -34,6 +34,14 @@ const useForm = (initialValues) => {
       newErrors.submit = "Le nom d'entreprise est invalide (au moins 3 caractères, sans caractères spéciaux).";
     }
 
+   if (!/^\+?\d[\d\s]{6,20}$/.test(formData.telephone.trim())) {
+  newErrors.submit = "Le numéro de téléphone est invalide (ex: +261 .. ... ..).";
+}
+
+    if (formData.adresse.trim().length < 5) {
+      newErrors.submit = "L'adresse doit contenir au moins 5 caractères.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -55,6 +63,8 @@ const useForm = (initialValues) => {
       data.append("email", formData.email);
       data.append("password", formData.password);
       data.append("entreprise", formData.entreprise);
+      data.append("telephone", formData.telephone);
+      data.append("adresse", formData.adresse);
       if (formData.photo) {
         data.append("photo", formData.photo);
       }
@@ -71,7 +81,6 @@ const useForm = (initialValues) => {
         return null;
       }
 
-     
       return result;
     } catch (error) {
       setErrors({ submit: "Erreur de connexion au serveur." });

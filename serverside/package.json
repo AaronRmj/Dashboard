@@ -19,6 +19,7 @@
     "multer": "^2.0.0",
     "mysql2": "^3.12.0",
     "nodemailer": "^7.0.3",
+    "pdfkit": "^0.17.1",
     "qrcode": "^1.5.4",
     "sequelize": "^6.37.5",
     "sequelize-auto": "^0.8.8"

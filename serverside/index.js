@@ -3,12 +3,14 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 const { where, Op } = require('sequelize');
-const db = require('./models/db');
+ const db = require('./models/db');
+
 const QRCode = require('qrcode');
 const crypto = require('crypto');
 const bwipjs = require('bwip-js');
@@ -35,12 +37,15 @@ db.sequelize.authenticate()
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = "tonSecretJWTUltraSecurise";
-
+const JWT_SECRET = process.env.JWT_SECRET;
 console.log("Valeur de JWT_SECRET :", JWT_SECRET);
 
 // Middlewares fonction avec execution  obtient et renvoie reponse 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // ou ton frontend
+  methods: ['GET','POST','PUT','DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -66,10 +71,11 @@ const upload = multer({ storage });
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user:  "optimabusiness10@gmail.com",
-    pass: "benfxsscpkjrdlbh"
+     user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
+
 
 
 // Routes!!!
@@ -146,11 +152,11 @@ app.get("/Employe", async (req, res) => {
 //  Inscription
 app.post('/signup', upload.single("photo"), async (req, res) => {
   try {
-    const { nom, email, password, entreprise } = req.body;
+    const { nom, email, password, entreprise, telephone, adresse } = req.body;
     const photoPath = req.file ? req.file.filename : null;
 
-    if (!nom || !email || !password || !entreprise) {
-      return res.status(400).json({ error: "Tous les champs   sont obligatoires" });
+    if (!nom || !email || !password || !entreprise || !telephone || !adresse) {
+      return res.status(400).json({ error: "Tous les champs sont obligatoires" });
     }
 
     const adminExist = await db.admin.findOne({ where: { Email: email } });
@@ -166,6 +172,8 @@ app.post('/signup', upload.single("photo"), async (req, res) => {
       Email: email,
       MotDePasse: hashedPassword,
       NomEntreprise: entreprise,
+      Telephone: telephone,
+      Adresse: adresse,
       Photo: photoPath
     });
 
@@ -176,6 +184,7 @@ app.post('/signup', upload.single("photo"), async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
 
 // Connexion 
 app.post('/login', async (req, res) => {
@@ -310,19 +319,24 @@ app.post('/forgot-password', async (req, res) => {
   }
 });
 
-
-function authMiddleware(req, res, next) {
+//fonction ilaina fona //a chaque action de l utilisateur actif anaty route reetr 
+  function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
+  console.log("Authorization Header:", authHeader); 
   if (!authHeader) return res.status(401).json({ error: "Token manquant" });
 
   const token = authHeader.split(' ')[1];
+  console.log("Token extrait:", token); 
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(401).json({ error: "Token invalide" });
+    if (err) {
+      console.error("Erreur JWT:", err);
+      return res.status(401).json({ error: "Token invalide ou expiré" });
+    }
+    console.log("Token décodé:", decoded);
     req.user = decoded;
     next();
   });
 }
-
 
 // route proteger +profil+ securisee 
 app.get('/profile', authMiddleware, async (req, res) => {
@@ -463,7 +477,7 @@ app.post('/ajouter-employe', authMiddleware, upload.single("photo"), async (req,
       return res.status(404).json({ error: "Administrateur introuvable." });
     }
 
-    const nomEntreprise = admin.NomEntreprise.trim().toLowerCase();
+    const nomEntreprise = admin.NomEntreprise.trim();
     const emailCheck = email.trim().toLowerCase();
 
     const existant = await db.employe.findOne({
@@ -500,8 +514,8 @@ app.post('/ajouter-employe', authMiddleware, upload.single("photo"), async (req,
       Poste: poste,
       Salaire: salaire,
       Mdp: hashedPassword,
-      Photo: photoPath, // Correction ici : chemin relatif
-      QRCodePath: "", // sera mis à jour après génération QR
+      Photo: photoPath, 
+      QRCodePath: "", 
       NomEntreprise: nomEntreprise,
       Matricule: matricule
     });
@@ -597,22 +611,7 @@ app.get('/user-info', authMiddleware, async (req, res) => {
 });
 
 
-app.post('/Employe/check-email', async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    const employe = await db.employe.findOne({ where: { Email: email } });
-
-    if (employe) {
-      res.json({ exists: true });
-    } else {
-      res.json({ exists: false });
-    }
-  } catch (error) {
-    console.error('Erreur lors de la vérification de l\'email:', error);
-    res.status(500).json({ error: 'Erreur serveur.' });
-  }
-});
 
 //VENTE
 
@@ -939,6 +938,383 @@ app.post("/Benefice", async (req, res)=>{
     Benefice = CA - PR;
     console.log(CA)
     res.status(200).json({Benefice : Benefice, CA : CA, SDate: req.body.StartDate, EDate : req.body.EndDate });
+});
+
+
+//  Enregistrer l'heure de début
+app.post("/heure-debut", authMiddleware, async (req, res) => {
+  try {
+    const { heureDebut } = req.body;
+    const { entreprise } = req.user; // Entreprise du token JWT
+    const today = new Date().toISOString().slice(0, 10);
+
+    const existingHeure = await db.heureDebut.findOne({
+      where: {
+        NomEntreprise: entreprise,
+        Date: today,
+      },
+    });
+
+    if (existingHeure) {
+      return res.status(400).json({ 
+        error: "Une heure de début a déjà été définie pour aujourd'hui",
+        heureDebut: existingHeure.HeureDebut 
+      });
+    }
+
+    const nouvelleHeure = await db.heureDebut.create({
+      NomEntreprise: entreprise,
+      Date: today,
+      HeureDebut: heureDebut,
+    });
+
+    res.json({ 
+      success: true, 
+      message: "Heure de début enregistrée avec succès",
+      heureDebut: nouvelleHeure.HeureDebut 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erreur lors de l'enregistrement de l'heure de début" });
+  }
+});
+
+app.get("/heure-debut/today", authMiddleware, async (req, res) => {
+  try {
+    const { entreprise } = req.user;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const heureDebut = await db.heureDebut.findOne({
+      where: {
+        NomEntreprise: entreprise,
+        Date: today,
+      },
+    });
+
+    if (heureDebut) {
+      res.json({ 
+        exists: true, 
+        heureDebut: heureDebut.HeureDebut,
+        date: heureDebut.Date 
+      });
+    } else {
+      res.json({ exists: false });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erreur lors de la vérification de l'heure de début" });
+  }
+});
+
+// Fonction de nettoyage automatique (dependant d  scheduler)
+const cleanupOldHeuresDebut = async () => {
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+    const deleted = await db.heureDebut.destroy({
+      where: {
+        Date: {
+          [db.Sequelize.Op.lt]: yesterdayStr
+        }
+      }
+    });
+
+    console.log(`${deleted} anciennes heures de début supprimées`);
+    return deleted;
+  } catch (error) {
+    console.error('Erreur lors du nettoyage des heures de début:', error);
+  }
+};
+
+// Scheduler pour nettoyer automatiquement chaque jour **hd samihafa 
+const scheduleCleanup = () => {
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setDate(midnight.getDate() + 1);
+  midnight.setHours(0, 0, 0, 0);
+  
+  const msUntilMidnight = midnight.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    cleanupOldHeuresDebut();
+  }, msUntilMidnight);
+};
+
+scheduleCleanup();
+
+// Routes affichage liste dans le logiciel 
+app.get("/presences/today", authMiddleware, async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const presences = await db.presence.findAll({
+      where: {
+        DatePresence: today,
+        NomEntreprise: req.user.entreprise,
+      },
+      include: [{ model: db.employe }],
+    });
+
+    res.json(presences);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erreur lors de la récupération des présences" });
+  }
+});
+
+app.post("/presences/scan", authMiddleware, async (req, res) => {
+  const { email, heureDebut } = req.body;
+  const { entreprise } = req.user;
+
+  // Vérif format email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Format de données invalides" });
+  }
+
+  const employe = await db.employe.findOne({ where: { Email: email } });
+  if (!employe) {
+    return res.status(404).json({ error: "Email introuvable" });
+  }
+
+  if (employe.NomEntreprise !== entreprise) {
+    return res.status(403).json({ error: "Employé n'appartient pas à votre entreprise" });
+  }
+
+  const maintenant = new Date();
+  let statut = "present";
+
+  if (heureDebut) {
+    const [h, m] = heureDebut.split(":").map(Number);
+    const heureLimite = h * 60 + m;
+    const currentMinutes = maintenant.getHours() * 60 + maintenant.getMinutes();
+    statut = currentMinutes <= heureLimite ? "present" : "retard";
+  }
+
+  let presence = await db.presence.findOne({
+    where: {
+      NumEmploye: employe.IdEmploye,
+      DatePresence: maintenant.toISOString().slice(0, 10),
+    },
+  });
+
+  if (presence) {
+    presence.Statut = statut;
+    presence.HeureScan = maintenant;
+    presence.Matricule = employe.Matricule;
+    presence.NomEntreprise = employe.NomEntreprise;
+    await presence.save();
+  } else {
+    presence = await db.presence.create({
+      NumEmploye: employe.IdEmploye,
+      Matricule: employe.Matricule,
+      NomEntreprise: employe.NomEntreprise,
+      DatePresence: maintenant.toISOString().slice(0, 10),
+      HeureScan: maintenant,
+      Statut: statut,
+    });
+  }
+
+  res.json({ success: true, employe, statut });
+});
+
+//  PDF extractena
+app.post('/presences/export-pdf', authMiddleware, async (req, res) => {
+  try {
+    const entrepriseToken = req.user.entreprise;
+    const today = new Date().toISOString().split('T')[0]; 
+
+    const { admin, heureDebut, presence, employe } = db;
+
+    const entrepriseInfo = await admin.findOne({
+      where: { NomEntreprise: entrepriseToken },
+      attributes: ['NomEntreprise', 'Photo', 'Adresse', 'Telephone']
+    });
+
+    if (!entrepriseInfo) {
+      return res.status(404).json({ error: "Informations de l'entreprise non trouvées" });
+    }
+
+    const heureDebutRecord = await heureDebut.findOne({
+      where: { 
+        NomEntreprise: entrepriseToken,
+        Date: today
+      },
+      attributes: ['HeureDebut']
+    });
+
+    if (!heureDebutRecord) {
+      return res.status(404).json({ error: "Aucune heure de début trouvée pour aujourd'hui" });
+    }
+
+    const heureDebutValue = heureDebutRecord.HeureDebut;
+
+    const presences = await presence.findAll({
+      where: { DatePresence: today },
+      include: [{
+        model: employe,
+        where: { NomEntreprise: entrepriseToken }, 
+        attributes: ['Nom', 'UserName', 'Adresse', 'Poste']
+      }],
+      attributes: ['NumEmploye', 'Statut', 'HeureScan'],
+      order: [['Statut', 'ASC'], [employe, 'Nom', 'ASC']]
+    });
+
+    const presents = presences.filter(p => p.Statut === 'present');
+    const retardataires = presences.filter(p => p.Statut === 'retard');
+
+    //  Créer le document PDF
+    const doc = new PDFDocument({ margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="fiche-presence-${today}.pdf"`);
+    doc.pipe(res);
+
+   let logoY = 50;
+if (entrepriseInfo.Photo) {
+  const logoPath = path.join(__dirname, 'uploads', entrepriseInfo.Photo); 
+  if (fs.existsSync(logoPath)) {
+    try {
+      const logoWidth = 80;
+      const logoHeight = 80;
+      const logoX = (doc.page.width - logoWidth) / 2; 
+      doc.image(logoPath, logoX, logoY, { width: logoWidth, height: logoHeight });
+      logoY += logoHeight + 10;
+    } catch (logoError) {
+      console.warn("Erreur lors du chargement du logo:", logoError);
+      logoY += 20;
+    }
+  }
+}
+
+
+    doc.fontSize(18).font('Helvetica-Bold');
+    const nomEntreprise = entrepriseInfo.NomEntreprise || entrepriseToken;
+    const nomWidth = doc.widthOfString(nomEntreprise);
+    const pageWidth = doc.page.width;
+    doc.text(nomEntreprise, (pageWidth - nomWidth) / 2, logoY);
+
+    doc.fontSize(12).font('Helvetica');
+    const telephone = entrepriseInfo.Telephone || '';
+    if (telephone) {
+      const telWidth = doc.widthOfString(telephone);
+      doc.text(telephone, (pageWidth - telWidth) / 2, logoY + 25);
+    }
+
+    const adresse = entrepriseInfo.Adresse || '';
+    if (adresse) {
+      const adresseWidth = doc.widthOfString(adresse);
+      doc.text(adresse, (pageWidth - adresseWidth) / 2, logoY + 40);
+    }
+
+  
+    let currentY = logoY + 80;
+
+    doc.fontSize(20).font('Helvetica-Bold');
+    const titre = "FICHE DE PRESENCE";
+    const titreWidth = doc.widthOfString(titre);
+    doc.text(titre, (pageWidth - titreWidth) / 2, currentY);
+    currentY += 40;
+
+    doc.fontSize(14).font('Helvetica');
+    const dateStr = `Date: ${new Date().toLocaleDateString('fr-FR')}`;
+    doc.text(dateStr, 50, currentY);
+    currentY += 20;
+
+    const heureStr = `Heure de début: ${heureDebutValue}`;
+    doc.text(heureStr, 50, currentY);
+    currentY += 40;
+
+    const drawTable = (title, data, startY, statusColor) => {
+  let y = startY;
+
+  // Titre section
+  doc.fontSize(16).font('Helvetica-Bold').fillColor(statusColor);
+  doc.text(title, 50, y);
+  y += 25;
+
+  if (data.length === 0) {
+    doc.fontSize(12).font('Helvetica').fillColor('gray');
+    doc.text("Aucun employé dans cette catégorie", 50, y);
+    return y + 30;
+  }
+
+  const tableLeft = 40;     
+  const tableWidth = 520;    
+  const itemHeight = 20;
+
+  // Colonnes rééquilibrées
+  const colWidths = [130, 130, 100, 80, 80]; 
+  const colPositions = [
+    tableLeft,
+    tableLeft + colWidths[0],
+    tableLeft + colWidths[0] + colWidths[1],
+    tableLeft + colWidths[0] + colWidths[1] + colWidths[2],
+    tableLeft + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+  ];
+
+  doc.rect(tableLeft, y - 3, tableWidth, itemHeight + 5).fill('#E5E7E9');
+  doc.fillColor('black').fontSize(10).font('Helvetica-Bold');
+  doc.text('Nom', colPositions[0], y);
+  doc.text('Prénom(s)', colPositions[1], y);
+  doc.text('Adresse', colPositions[2], y);
+  doc.text('Poste', colPositions[3], y);
+  doc.text("Arrivée", colPositions[4], y);
+
+  y += itemHeight;
+  doc.moveTo(tableLeft, y).lineTo(tableLeft + tableWidth, y).stroke();
+  y += 5;
+
+  // Lignes du tableau
+  doc.font('Helvetica').fontSize(9);
+  data.forEach((item, index) => {
+    if (y > 700) {
+      doc.addPage();
+      y = 80;
+    }
+
+    const bgColor = index % 2 === 0 ? '#FFFFFF' : '#F8F9F9';
+    doc.rect(tableLeft, y - 2, tableWidth, itemHeight).fill(bgColor);
+
+    doc.fillColor('black');
+    doc.text(item.employe.Nom || '-', colPositions[0], y, { width: colWidths[0] - 5 });
+    doc.text(item.employe.UserName || '-', colPositions[1], y, { width: colWidths[1] - 5 });
+    doc.text(item.employe.Adresse || '-', colPositions[2], y, { width: colWidths[2] - 5 });
+    doc.text(item.employe.Poste || '-', colPositions[3], y, { width: colWidths[3] - 5 });
+    doc.text(item.HeureScan || '-', colPositions[4], y, { width: colWidths[4] - 5 });
+
+    y += itemHeight;
+  });
+
+  return y + 30; 
+};
+
+    currentY = drawTable(`PRÉSENTS (${presents.length})`, presents, currentY, '#b97425ff');
+
+    if (currentY > 600) {
+      doc.addPage();
+      currentY = 50;
+    }
+
+    currentY = drawTable(`RETARDATAIRES (${retardataires.length})`, retardataires, currentY, '#A7001E');
+
+    // Pied de page
+    const bottomY = doc.page.height - 100;
+    doc.fontSize(10).font('Helvetica').fillColor('black');
+    doc.text('Signature du responsable: ____________________', 50, bottomY);
+    doc.text(`Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 300, bottomY + 20);
+
+    doc.end();
+
+  } catch (error) {
+    console.error('Erreur lors de la génération du PDF:', error);
+    res.status(500).json({
+      error: 'Erreur lors de la génération du PDF',
+      details: error.message
+    });
+  }
 });
 
 

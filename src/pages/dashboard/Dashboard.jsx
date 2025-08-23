@@ -11,7 +11,7 @@ const Dashboard = () =>{
     const Statistics = [
         {title: "Nombre de clients", icon: <IoPeopleOutline /> , number: "400"},
         {title: "Nombre de commandes", icon: <MdProductionQuantityLimits />  , number: "500"},
-        {title: "Total achats", icon:<FcSalesPerformance />  , number: "100000000"},
+        {title: "Total achats", icon:<FcSalesPerformance />  , number: "100000"},
         {title: "Total ventes", icon:<GoPackageDependencies /> , number: "500000"},
         
     ]
@@ -26,7 +26,7 @@ const Dashboard = () =>{
                 <div className="col-span-4">
                     <BeneficeChart className="flex"/>
                 </div>
-                <div className="col-span-2 flex text-center items-start m-5 ">
+                <div className="col-span-2 flex text-center items-start m-5">
                     <BestSellerChart />
                 </div>
             </div>
