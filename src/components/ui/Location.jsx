@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap , useMapEvents } from "react-leaflet";
 import {useState, useEffect} from "react";
-import { marker } from "leaflet";
+import Itineraire from "./Itineraire";
 
 function ClickHandler({ setStart, setEnd, start, end }) {
   useMapEvents({
@@ -27,7 +27,13 @@ export default function Location() {
 
   return (
     <section className="h-screen w-full rounded-lg">
-      <h1 className="text-center text-3xl">Localisez votre mission</h1>
+      {start && end &&(
+          <div className="text-center">
+            <p>Départ: {start.lat.toFixed(4)}, {start.lng.toFixed(4)}</p>
+            <p>Arrivée: {end.lat.toFixed(4)}, {end.lng.toFixed(4)}</p>
+          </div>
+      )}
+
       <MapContainer
         center={[-18.8792, 47.5079]} // Position centrée
         zoom={15}
@@ -55,6 +61,12 @@ export default function Location() {
             <Popup>📍Point d'arrivée</Popup>
           </Marker>
         )}
+
+        
+        {start && end &&( //itineraire ra misy start et end
+          <Itineraire start={start} end={end} />
+        )}
+
       </MapContainer>
     </section>
   );
