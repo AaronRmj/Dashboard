@@ -12,37 +12,86 @@ const db = require('./models/db');
 const QRCode = require('qrcode');
 const crypto = require('crypto');
 const bwipjs = require('bwip-js');
-
-
-
-
-
-// Connexion à la BD
-/*db.sequelize.authenticate()
-  .then(() => console.log(" Connecté à la BD "))
-  .catch(err => console.error(" Erreur connexion BD :", err));
-
-
-db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
-
-  .then(() => {
-    console.log(" Synchronisation Sequelize ");
-    console.log("Modèles chargés :", Object.keys(db));
-  })
-
-  .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
-
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = "tonSecretJWTUltraSecurise";
-
-console.log("Valeur de JWT_SECRET :", JWT_SECRET);
-
 // Middlewares fonction avec execution  obtient et renvoie reponse 
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log("Valeur de JWT_SECRET :", JWT_SECRET);
+
+
+//importe classe server
+const { Server } = require('socket.io');
+
+//importe module http pour creer un serveur
+const http = require('http');
+
+
+const server = http.createServer(app);
+
+//initialise le socket avec le server http
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ["GET", "POST"]
+  }
+});
+
+//ecoute des evenements niveau server
+io.on('connection', (socket) => {
+  console.log("Client connecté", socket.id);
+  
+  socket.on('position-livreur', (data) => {
+    console.log('📡 POSITION LIVREUR REÇUE:');
+    console.log('ID:', data.id);
+    console.log('Position:', data.position);
+    console.log('Timestamp:', data.timestamp);
+    console.log('----------------------');
+    
+    // 1. Envoyer au livreur lui-même
+    socket.emit('ma-position', {
+      type: 'ma-position',
+      position: data.position
+    });
+
+    // 2. Envoyer aux gestionnaires
+    socket.broadcast.emit('position-update', {
+      type: 'position-update',
+      position: data.position
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log("Client déconnecté", socket.id);
+  });
+});
+server.listen(PORT, ()=>{
+  console.log(`Serveur socket.IO demaré sur le port ${PORT}`);
+  
+})
+
+
+// Connexion à la BD
+db.sequelize.authenticate()
+  .then(() => console.log(" Connecté à la BD "))
+  .catch(err => console.error(" Erreur connexion BD :", err));
+
+
+// db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+
+//   .then(() => {
+//     console.log(" Synchronisation Sequelize ");
+//     console.log("Modèles chargés :", Object.keys(db));
+//   })
+
+//   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
+
+
+
+
 
 // cree dossier uploads sinon existe 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -950,6 +999,6 @@ app.post("/Benefice", async (req, res)=>{
 });
 
 
-app.listen(PORT, () => {
-    console.log(`serveur au port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//     console.log(`serveur au port ${PORT}`);
+// });
