@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap , useMapEvents } from "r
 import {useState, useEffect} from "react";
 import Itineraire from "./Itineraire";
 
+//refa miclique
 function ClickHandler({ setStart, setEnd, start, end }) {
   useMapEvents({
     click: (e) => {

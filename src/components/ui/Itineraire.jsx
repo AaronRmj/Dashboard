@@ -21,13 +21,18 @@ const Itineraire = ({start, end}) =>{
             ],
             //modifiaction par drag
             routeWhileDragging: false,
-            styles:[{color: '#4285F4', // Bleu Google exact
-                weight: 8,        // TRÈS ÉPAIS - comme Google Maps
-                opacity: 0.9,}],
+            lineOptions:{
+                styles:[{
+                    color: '#4285f4',
+                    weight: 5,
+                    opacity: 0.9
+                }]
+            },
             //une seule route
             showAlternatives: false,
             //points fixes
-            draggableWapPoints: false,
+            
+            draggableWayPoints: true,
             //zoom automatique
             fitSelectedRoutes: true
         }).addTo(map);
