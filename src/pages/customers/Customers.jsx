@@ -1,5 +1,5 @@
 import React from "react";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import Button from "../../components/ui/Button";
 import { IoCloseOutline } from "react-icons/io5";
 import Label from "../../components/ui/Label";
@@ -24,6 +24,15 @@ const Customers = () =>{
             }   
         ]
     })
+    const [produits, setProduits] = useState([]);
+
+    useEffect(() => {
+        // Récupérer la liste des produits à l’ouverture du formulaire
+        fetch("http://localhost:8080/Produit")
+            .then(res => res.json())
+            .then(data => setProduits(data))
+            .catch(() => setProduits([]));
+    }, [inVoice]);
     
 
     const ProduitChange = (index, name, value) => {
@@ -42,16 +51,29 @@ const Customers = () =>{
         console.log(formData);
     }
     
+    // Date d'aujourd'hui au format yyyy-mm-dd
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Initialiser la date par défaut pour la première ligne
+    useEffect(() => {
+        setFormData(prev => ({
+            ...prev,
+            Produit: prev.Produit.map((item, idx) =>
+                idx === 0 && !item.Date ? { ...item, Date: today } : item
+            )
+        }));
+    }, []);
+
     const addRow = () => {
         setFormData(prevFormData => ({
             ...prevFormData,
             Produit: [
                 ...prevFormData.Produit,
                 {
-                    Quantite:"",
-                    Date:"",
-                    CodeProduit:"",
-                    NumEmploye:""   
+                    Quantite: "",
+                    Date: today,
+                    CodeProduit: "",
+                    NumEmploye: ""
                 }
             ]
         }));
@@ -162,42 +184,52 @@ const Customers = () =>{
                                 </thead>
                                 <tbody>
                                 {formData.Produit.map((item, index) => (
-                                    <tr key = {index} className="text-left">
-                                        <td><Label
-                                            inputClassName="border-none"
-                                            placeholder="6"
-                                            name="CodeProduit"
-                                            type="number"
-                                            value={item.CodeProduit}
-                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value )}
+                                    <tr key={index} className="text-left">
+                                        <td>
+                                            {/* Liste déroulante des produits */}
+                                            <select
+                                                className="border rounded px-2 py-1"
+                                                name="CodeProduit"
+                                                value={item.CodeProduit}
+                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                                required
+                                            >
+                                                <option value="">Sélectionner...</option>
+                                                {produits.map(prod => (
+                                                    <option key={prod.IdProduit} value={prod.IdProduit}>
+                                                        {prod.Description}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <Label 
+                                                inputClassName="border-none"
+                                                type="date"
+                                                name="Date"
+                                                value={item.Date}
+                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
                                             />
-                                            
                                         </td>
-                                        <td><Label 
-                                            inputClassName="border-none"
-                                            type="date"
-                                            name="Date"
-                                            value={item.Date}
-                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}
-                                         />
-                                         </td>
-                                        <td><Label 
-                                            inputClassName="border-none"
-                                            placeholder="2"
-                                            name="Quantite"
-                                            type="number"
-                                            value={item.Quantite}
-                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}         
-                                         />
+                                        <td>
+                                            <Label 
+                                                inputClassName="border-none"
+                                                placeholder="2"
+                                                name="Quantite"
+                                                type="number"
+                                                value={item.Quantite}
+                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                            />
                                         </td>
-                                        <td><Label
-                                            inputClassName="border-none"
-                                            placeholder="1"
-                                            name="NumEmploye"
-                                            type="number"
-                                            value={item.NumEmploye}
-                                            onChange={(e)=> ProduitChange(index, e.target.name , e.target.value)}
-                                        />   
+                                        <td>
+                                            <Label
+                                                inputClassName="border-none"
+                                                placeholder="1"
+                                                name="NumEmploye"
+                                                type="number"
+                                                value={item.NumEmploye}
+                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                            />
                                         </td>      
                                     </tr>)
                                     )
