@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap , useMapEvents } from "react-leaflet";
 import {useState, useEffect} from "react";
 import Itineraire from "./Itineraire";
+import LiveTracking from "./LiveTracking";
 
 //refa miclique
 function ClickHandler({ setStart, setEnd, start, end }) {
@@ -45,6 +46,8 @@ export default function Location() {
           attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <LiveTracking />
 
         {/* Gestion du clic */}
         <ClickHandler setStart={setStart} setEnd={setEnd} start={start} end={end} />
