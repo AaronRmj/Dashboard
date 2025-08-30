@@ -125,7 +125,7 @@ const Customers = () =>{
                 
                 //ra false ilay inVoice dia tsisy retour
                 <section className="mx-auto space-x-6 lg:max-w-md w-2xs h-screen flex justify-between items-center" onClick={handleInvoice}>
-                    <Button label="Create New Invoice"/>
+                    <Button label="Génerer une nouvelle facture"/>
                 </section>
             ) : (
 
@@ -245,14 +245,15 @@ const Customers = () =>{
                                 </tbody>
                                 
                             </table>
-
+                            <section className="space-y-2">
                                 <div>
                                     <Button label="Ajouter items" onClick={addRow} type="button"/>
                                 </div>
-
-                            <div>
-                                <Button label="Effectuer Vente" type="submit"/>
-                            </div>
+                                <div>
+                                    <Button label="Effectuer Vente" type="submit"/>
+                                </div>
+                            </section>
+                               
                     </form>
                 </section>
             )}

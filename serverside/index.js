@@ -82,14 +82,14 @@ db.sequelize.authenticate()
   .catch(err => console.error(" Erreur connexion BD :", err));
 
 
-db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+// db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
-  .then(() => {
-    console.log(" Synchronisation Sequelize ");
-    console.log("Modèles chargés :", Object.keys(db));
-  })
+//   .then(() => {
+//     console.log(" Synchronisation Sequelize ");
+//     console.log("Modèles chargés :", Object.keys(db));
+//   })
 
-  .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+//   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
 
 // Middlewares fonction avec execution  obtient et renvoie reponse 
