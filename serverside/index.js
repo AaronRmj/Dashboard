@@ -29,13 +29,14 @@ const { Server } = require('socket.io');
 const http = require('http');
 
 
-const server = http.createServer(app);
+const OptimaServer = http.createServer(app);
 
 //initialise le socket avec le server http
-const io = new Server(server, {
+const io = new Server(OptimaServer, {
   cors: {
-    origin: '*',
-    methods: ["GET", "POST"]
+    origin: 'http://localhost:5173', // Remplace par l'URL de ton frontend
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -67,8 +68,8 @@ io.on('connection', (socket) => {
     console.log("Client déconnecté", socket.id);
   });
 });
-server.listen(PORT, ()=>{
-  console.log(`Serveur socket.IO demaré sur le port ${PORT}`);
+OptimaServer.listen(PORT, ()=>{
+  console.log(`Serveur demarré sur le port ${PORT}`);
   
 })
 
@@ -1034,9 +1035,7 @@ app.post("/Benefice", async (req, res)=>{
 });
 
 
-app.listen(PORT, () => {
-    console.log(`serveur au port ${PORT}`);
-});
+
 app.get("/dashboard-stats", async (req, res) => {
   try {
     // nombre de clients et commandes
