@@ -41,6 +41,8 @@ var heureDebut = _heureDebut(sequelize, DataTypes);
   // Tell Sequelize to join using the Entreprise column as targetKey/sourceKey
   achat.belongsTo(fournisseur, { foreignKey: "InfoFournisseur", targetKey: "Entreprise" });
   fournisseur.hasMany(achat, { foreignKey: "InfoFournisseur", sourceKey: "Entreprise" });
+  employe.hasMany(presence, { foreignKey: "NumEmploye" });
+  presence.belongsTo(employe, { foreignKey: "NumEmploye" });
   
   return {
     admin,
