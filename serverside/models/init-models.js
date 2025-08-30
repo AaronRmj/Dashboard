@@ -31,8 +31,10 @@ function initModels(sequelize) {
   produit.hasMany(achat, { foreignKey: "NomProduit"});
   vente.belongsTo(produit, { foreignKey: "CodeProduit"});
   produit.hasMany(vente, { foreignKey: "CodeProduit"});
-  achat.belongsTo(fournisseur, {foreignKey :"InfoFournisseur"});
-  fournisseur.hasMany(achat, {foreignKey : "InfoFournisseur"});
+  // InfoFournisseur stores the fournisseur Entreprise (string), not the PK IdFournisseur
+  // Tell Sequelize to join using the Entreprise column as targetKey/sourceKey
+  achat.belongsTo(fournisseur, { foreignKey: "InfoFournisseur", targetKey: "Entreprise" });
+  fournisseur.hasMany(achat, { foreignKey: "InfoFournisseur", sourceKey: "Entreprise" });
   
   return {
     admin,

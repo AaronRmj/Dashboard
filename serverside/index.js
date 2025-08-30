@@ -689,6 +689,24 @@ app.post("/Vente", async (req, res) => {
     }
 });
 
+// GET list of ventes (for history view)
+app.get('/Vente', async (req, res) => {
+  try {
+    const ventes = await db.vente.findAll({
+      include: [
+        { model: db.produit },
+        { model: db.employe },
+        { model: db.facture, include: [{ model: db.client }] }
+      ],
+      order: [['Date', 'DESC']]
+    });
+    res.status(200).json(ventes);
+  } catch (err) {
+    console.error('Erreur GET /Vente :', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 
 
 // Route MAJ photo de profil (admin ou employe)
@@ -879,6 +897,23 @@ app.post("/Achat", upload.any(), async (req, res) => {
   }
 });
 
+// GET list of achats (for history view)
+app.get('/Achat', async (req, res) => {
+  try {
+    const achats = await db.achat.findAll({
+      include: [
+        { model: db.produit },
+        { model: db.fournisseur }
+      ],
+      order: [['Date', 'DESC']]
+    });
+    res.status(200).json(achats);
+  } catch (err) {
+    console.error('Erreur GET /Achat :', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 
 // BENEFICE total ou par produit ou par date
 app.post("/Benefice", async (req, res)=>{
@@ -952,4 +987,81 @@ app.post("/Benefice", async (req, res)=>{
 
 app.listen(PORT, () => {
     console.log(`serveur au port ${PORT}`);
+});
+app.get("/dashboard-stats", async (req, res) => {
+  try {
+    // nombre de clients et commandes
+    const nbClients = await db.client.count();
+    const nbCommandes = await db.facture.count();
+
+    // Charger tous les produits (PAunitaire / PVunitaire)
+    const produits = await db.produit.findAll({
+      attributes: ["IdProduit", "Description", "PAunitaire", "PVunitaire"]
+    });
+    const prodByDesc = new Map(produits.map(p => [p.Description, p]));
+    const prodById = new Map(produits.map(p => [p.IdProduit, p]));
+
+    // ACHATS : la table achat contient NomProduit et Quantite -> on récupère le PA via Description
+    const achats = await db.achat.findAll(); // on prend tous les achats
+    const totalAchats = achats.reduce((sum, achat) => {
+      const q = Number(achat.Quantite) || 0;
+      const prod = prodByDesc.get(achat.NomProduit);
+      const pa = prod ? Number(prod.PAunitaire) || 0 : 0;
+      return sum + q * pa;
+    }, 0);
+
+    // VENTES : la table vente contient Quantite et CodeProduit (FK) ; on essaye d'utiliser l'include sinon fallback sur la map
+    const ventes = await db.vente.findAll({
+      include: [{ model: db.produit, attributes: ["PVunitaire", "IdProduit"] }]
+    });
+    const totalVentes = ventes.reduce((sum, vente) => {
+      const q = Number(vente.Quantite) || 0;
+      let pv = vente.produit ? Number(vente.produit.PVunitaire) || 0 : undefined;
+      if (pv === undefined) {
+        const prod = prodById.get(vente.CodeProduit);
+        pv = prod ? Number(prod.PVunitaire) || 0 : 0;
+      }
+      return (sum + q * pv) ;
+    }, 0);
+
+    res.json({
+      nbClients,
+      nbCommandes,
+      totalAchats,
+      totalVentes
+    });
+  } catch (err) {
+    console.error("Erreur /dashboard-stats :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.get("/best-sellers", async (req, res) => {
+  try {
+    // Regroupe les ventes par produit et somme la quantité
+    const ventes = await db.vente.findAll({
+      attributes: [
+        "CodeProduit",
+        [db.sequelize.fn("SUM", db.sequelize.col("Quantite")), "totalVendu"]
+      ],
+      group: ["CodeProduit"],
+      include: [{
+        model: db.produit,
+        attributes: ["Description"]
+      }],
+      order: [[db.sequelize.literal("totalVendu"), "DESC"]],
+      limit: 3 // Top 3
+    });
+
+    // Formatage pour le frontend
+    const result = ventes.map(v => ({
+      label: v.produit.Description,
+      value: v.dataValues.totalVendu
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error("Erreur best-sellers :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
