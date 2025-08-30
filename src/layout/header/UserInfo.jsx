@@ -36,7 +36,6 @@ const UserInfo = () => {
 
   if (!user) return <p className="text-sm text-gray-500">Chargement...</p>;
 
-  let role;
 
   return (
     <div className="relative w-full max-w-md mx-auto">
@@ -75,7 +74,7 @@ const UserInfo = () => {
   {showMore && (
     <div
       ref={panelRef}
-      className="absolute top-11 left-40 transform -translate-x-1/2 bg-white rounded-sm shadow-xl border border-gray-200 w-80 p-6 z-50 transition-all duration-500 scale-100 opacity-100"
+      className="absolute top-11 left-35 transform -translate-x-1/2 bg-white rounded-sm shadow-xl border border-gray-200 w-70 p-6 z-50 transition-all duration-500 scale-100 opacity-100"
     >
       <button
         onClick={() => setShowMore(false)}
@@ -109,7 +108,7 @@ const UserInfo = () => {
         {/* Input changement photo */}
         <div className="mt-6 cursor-pointer">
           <label className="relative">
-            <span className="inline-block bg-sky-600 text-white text-sm font-medium px-7 py-2 rounded-lg shadow hover:bg-sky-700 transition duration-200">
+            <span className="inline-block bg-sky-600 text-white text-sm font-medium px-4 py-2 rounded-lg shadow hover:bg-sky-700 transition duration-200">
               Changer ou Insérer une photo
             </span>
             <input

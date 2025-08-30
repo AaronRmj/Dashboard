@@ -176,64 +176,72 @@ const Customers = () =>{
                             <table className="my-10 flex-1">
                                 <thead>
                                     <tr className="text-left">
-                                        <th className="font-thin">Code Produit</th>
+                                        <th className="font-thin">Produit(s)</th>
                                         <th className="font-thin">Date de règlement</th>
                                         <th className="font-thin">Quantité</th>
                                         <th className="font-thin">Num Employé</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                {formData.Produit.map((item, index) => (
-                                    <tr key={index} className="text-left">
-                                        <td>
-                                            {/* Liste déroulante des produits */}
-                                            <select
-                                                className="border rounded px-2 py-1"
-                                                name="CodeProduit"
-                                                value={item.CodeProduit}
-                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Sélectionner...</option>
-                                                {produits.map(prod => (
-                                                    <option key={prod.IdProduit} value={prod.IdProduit}>
-                                                        {prod.Description}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <Label 
-                                                inputClassName="border-none"
-                                                type="date"
-                                                name="Date"
-                                                value={item.Date}
-                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
-                                            />
-                                        </td>
-                                        <td>
-                                            <Label 
-                                                inputClassName="border-none"
-                                                placeholder="2"
-                                                name="Quantite"
-                                                type="number"
-                                                value={item.Quantite}
-                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
-                                            />
-                                        </td>
-                                        <td>
-                                            <Label
-                                                inputClassName="border-none"
-                                                placeholder="1"
-                                                name="NumEmploye"
-                                                type="number"
-                                                value={item.NumEmploye}
-                                                onChange={e => ProduitChange(index, e.target.name, e.target.value)}
-                                            />
-                                        </td>      
-                                    </tr>)
-                                    )
-                                }
+                                {formData.Produit.map((item, index) => {
+                                    // Trouver le produit sélectionné
+                                    const selectedProd = produits.find(prod => prod.IdProduit === parseInt(item.CodeProduit));
+                                    return (
+                                        <tr key={index} className="text-left">
+                                            <td>
+                                                <select
+                                                    className="border rounded px-2 py-1"
+                                                    name="CodeProduit"
+                                                    value={item.CodeProduit}
+                                                    onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                                    required
+                                                >
+                                                    <option value="">Sélectionner...</option>
+                                                    {produits.map(prod => (
+                                                        <option key={prod.IdProduit} value={prod.IdProduit}>
+                                                            {prod.Description}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {/* Affichage du stock si produit sélectionné */}
+                                                {selectedProd && (
+                                                    <span className="ml-2 text-xs text-gray-500">
+                                                        Stock: {selectedProd.Stock}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <Label 
+                                                    inputClassName="border-none"
+                                                    type="date"
+                                                    name="Date"
+                                                    value={item.Date}
+                                                    onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                                />
+                                            </td>
+                                            <td>
+                                                <Label 
+                                                    inputClassName="border-none"
+                                                    placeholder="2"
+                                                    name="Quantite"
+                                                    type="number"
+                                                    value={item.Quantite}
+                                                    onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                                />
+                                            </td>
+                                            <td>
+                                                <Label
+                                                    inputClassName="border-none"
+                                                    placeholder="1"
+                                                    name="NumEmploye"
+                                                    type="number"
+                                                    value={item.NumEmploye}
+                                                    onChange={e => ProduitChange(index, e.target.name, e.target.value)}
+                                                />
+                                            </td>      
+                                        </tr>
+                                    );
+                                })}
                                 </tbody>
                                 
                             </table>

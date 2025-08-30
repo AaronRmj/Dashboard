@@ -7,18 +7,23 @@ import {
   MdAddBusiness,
   MdErrorOutline,
   MdCheckCircle,
+   MdLocationOn,       // 📍 Icône adresse/localisation
+  MdPhone, 
 } from "react-icons/md";
 import { Link, useNavigate } from "react-router-dom";
 import useForm from "../../../hooks/useForm";
 
 const SignupPage = () => {
-  const { formData, handleChange, handleSubmit, errors } = useForm({
-    nom: "",
-    email: "",
-    password: "",
-    entreprise: "",
-    photo: "",
-  });
+
+const { formData, handleChange, handleSubmit, errors } = useForm({
+  nom: "",
+  email: "",
+  password: "",
+  entreprise: "",
+  telephone: "",
+  adresse: "",
+  photo: "",
+});
 
   const [preview, setPreview] = useState(null);
   const [popupVisible, setPopupVisible] = useState(false);
@@ -96,6 +101,23 @@ const SignupPage = () => {
               placeholder="Nom d'entreprise"
               name="entreprise"
               value={formData.entreprise}
+              onChange={handleChange}
+            />
+            <DynamicInput
+              icon={ MdPhone}
+              type="text"
+              placeholder="Téléphone"
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+            />
+            
+            <DynamicInput
+              icon={ MdLocationOn}
+              type="text"
+              placeholder="Adresse"
+              name="adresse"
+              value={formData.adresse}
               onChange={handleChange}
             />
           </div>

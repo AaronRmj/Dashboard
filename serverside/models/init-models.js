@@ -8,6 +8,9 @@ var _produit = require("./produit");
 var _vente = require("./vente");
 const _fournisseur = require("./fournisseur");
 var _reset_code = require("./mdpOublie");
+var _presence = require("./presence");
+var _heureDebut = require("./heureDebut");
+
 
 function initModels(sequelize) {
   var admin = _admin(sequelize, DataTypes); 
@@ -19,6 +22,9 @@ function initModels(sequelize) {
   var vente = _vente(sequelize, DataTypes);
   var fournisseur = _fournisseur(sequelize, DataTypes);
   var reset_code = _reset_code(sequelize, DataTypes);
+    var presence = _presence(sequelize, DataTypes);
+var heureDebut = _heureDebut(sequelize, DataTypes);
+
 
 
   facture.belongsTo(client, { foreignKey: "InfoClient"});
@@ -31,8 +37,12 @@ function initModels(sequelize) {
   produit.hasMany(achat, { foreignKey: "NomProduit"});
   vente.belongsTo(produit, { foreignKey: "CodeProduit"});
   produit.hasMany(vente, { foreignKey: "CodeProduit"});
-  achat.belongsTo(fournisseur, {foreignKey :"InfoFournisseur"});
-  fournisseur.hasMany(achat, {foreignKey : "InfoFournisseur"});
+  // InfoFournisseur stores the fournisseur Entreprise (string), not the PK IdFournisseur
+  // Tell Sequelize to join using the Entreprise column as targetKey/sourceKey
+  achat.belongsTo(fournisseur, { foreignKey: "InfoFournisseur", targetKey: "Entreprise" });
+  fournisseur.hasMany(achat, { foreignKey: "InfoFournisseur", sourceKey: "Entreprise" });
+  employe.hasMany(presence, { foreignKey: "NumEmploye" });
+  presence.belongsTo(employe, { foreignKey: "NumEmploye" });
   
   return {
     admin,
@@ -43,7 +53,9 @@ function initModels(sequelize) {
     produit,
     vente,
     fournisseur,
-    reset_code
+     presence,
+    reset_code,
+      heureDebut
   };
 }
 module.exports = initModels;
