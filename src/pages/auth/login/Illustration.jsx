@@ -1,5 +1,5 @@
 import React from "react";
-import undraw_data_0ml2 from "../../../assets/images/undraw_data_0ml2.png";
+import undraw_data_0ml2 from "../../../assets/images/ispm.png";
 
 const Illustration = () =>{
     return(

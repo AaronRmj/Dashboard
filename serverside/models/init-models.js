@@ -8,6 +8,9 @@ var _produit = require("./produit");
 var _vente = require("./vente");
 const _fournisseur = require("./fournisseur");
 var _reset_code = require("./mdpOublie");
+var _presence = require("./presence");
+var _heureDebut = require("./heureDebut");
+
 
 function initModels(sequelize) {
   var admin = _admin(sequelize, DataTypes); 
@@ -19,6 +22,9 @@ function initModels(sequelize) {
   var vente = _vente(sequelize, DataTypes);
   var fournisseur = _fournisseur(sequelize, DataTypes);
   var reset_code = _reset_code(sequelize, DataTypes);
+    var presence = _presence(sequelize, DataTypes);
+var heureDebut = _heureDebut(sequelize, DataTypes);
+
 
 
   facture.belongsTo(client, { foreignKey: "InfoClient"});
@@ -45,7 +51,9 @@ function initModels(sequelize) {
     produit,
     vente,
     fournisseur,
-    reset_code
+     presence,
+    reset_code,
+      heureDebut
   };
 }
 module.exports = initModels;

@@ -55,7 +55,7 @@ const Dashboard = () => {
                 <div className="col-span-4">
                     <BeneficeChart className="flex"/>
                 </div>
-                <div className="col-span-2 flex text-center items-start m-5 ">
+                <div className="col-span-2 flex text-center items-start m-5">
                     <BestSellerChart />
                 </div>
             </div>
