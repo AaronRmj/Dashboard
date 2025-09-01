@@ -20,7 +20,7 @@ const {createServer} = require('http');
 
 // Connexion à la BD
 db.sequelize.authenticate()
-  .then(() => console.log(" Connecté à la BD "))
+  .then(() => console.log("Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
 

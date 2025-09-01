@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useState } from "react";
+import { data } from "react-router-dom";
 import { io } from "socket.io-client";
 // // socket.on('message', (text) => {
 // //     const element = document.createElement('li');
@@ -9,50 +10,56 @@ import { io } from "socket.io-client";
 const Inbox = () =>{
     const [messages, setMessages] = useState([]);
     const[msgToSend, setMsgToSend] = useState("");
+    const [userToken, setUserToken] = useState(null);
     const socketRef = useRef(null);
-    const debug = socketRef.current;
     useEffect(()=>{
-        console.log("mount")
+        let isMounted = true;
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         console.log("Token from Browser acquired");
         
-        if(socketRef.current == null)
-        {
-            socketRef.current = io('http://localhost:8080');
-            console.log("Un socket a été créé");
-
-        }
-
-        const fetchUser = async () => {
-
+        
+        const fetchUserData = async () => {
+            
             //acquisition userInfo grace au token pour identifier l'user
             const res = await fetch("http://localhost:8080/user-info", {
-            headers: { Authorization: `Bearer ${token}` }});
+                headers: { Authorization: `Bearer ${token}` }});
             const user = await res.json();
+            if(isMounted) setUserToken(user);
             
-            //Lancement connexion socket{}
-            socketRef.current.emit('register', user);
-            console.log("token user envoyé");     
         };
-        fetchUser();
+        fetchUserData();
+        return ()=>{
+            isMounted = false;
+        };
+            
+    }, []);
     
+    useEffect(()=>{
+        
+        if(!userToken) return;
+    
+        const socket = io('http://localhost:8080');
+        console.log("Un socket a été créé");
+        
+        //Lancement connexion socket{}
+        socket.emit('register', userToken);
+        console.log("token user envoyé");     
+        
         //Récéption de messages
-        socketRef.current.on('message', (msg)=>{
+        socket.on('message', (msg)=>{
             setMessages((prev) => [...prev, msg]);
         });
         
+        socketRef.current = socket;
         
         return () => {
-            console.log(`l'état du socket: ${socketRef.current}`);
-            if(socketRef.current)
-            {
-                socketRef.current.disconnect(); 
-                console.log("Connexion socket interrompue"); 
-            }
-           console.log("unmount");
+            console.log(`l'état du socket: ${socket}`);
+            socketRef.disconnect(); 
+            console.log("Connexion socket interrompue");
         };
-    }, []);
-   
+
+    }, [userToken]);
+            
     return(
         <div>
             <ul>
