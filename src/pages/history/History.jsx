@@ -21,9 +21,26 @@ function parseDate(item) {
     // Tester plusieurs champs de date courants utilisés côté serveur
     const candidates = [item.Date, item.date, item.createdAt, item.CreatedAt, item.SDate, item.StartDate];
     for (const c of candidates) {
-        if (!c) continue;
-        const d = new Date(c);
-        if (!isNaN(d)) return d;
+        if (!c && c !== 0) continue;
+
+        // Numeric timestamp
+        if (typeof c === 'number') return { date: new Date(c), hasTime: true };
+
+        const s = String(c).trim();
+
+        // Date-only format like "YYYY-MM-DD" should be treated as local date
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+            const [y, m, d] = s.split('-').map(Number);
+            return { date: new Date(y, m - 1, d), hasTime: false };
+        }
+
+        // ISO or other parseable formats
+        const d = new Date(s);
+        if (!isNaN(d)) {
+            // Detect if the string contains a time component
+            const hasTime = /T|\d:\d/.test(s);
+            return { date: d, hasTime };
+        }
     }
     return null;
 }
@@ -95,20 +112,24 @@ const History = () => {
                 const merged = [];
 
                 ventes.forEach((v, i) => {
+                    const p = parseDate(v) || { date: new Date(), hasTime: false };
                     merged.push({
                         id: v.IdVente || v.Id || `vente-${i}`,
                         type: "Vente",
                         raw: v,
-                        date: parseDate(v) || new Date(),
+                        date: p.date,
+                        hasTime: p.hasTime
                     });
                 });
 
                 achats.forEach((a, i) => {
+                    const p = parseDate(a) || { date: new Date(), hasTime: false };
                     merged.push({
                         id: a.IdAchat || a.Id || `achat-${i}`,
                         type: "Achat",
                         raw: a,
-                        date: parseDate(a) || new Date(),
+                        date: p.date,
+                        hasTime: p.hasTime
                     });
                 });
 
@@ -186,7 +207,7 @@ const History = () => {
                                 return (
                                     <React.Fragment key={h.id}>
                                         <tr className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 text-sm text-gray-700">{h.date ? h.date.toLocaleString() : '-'}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-700">{h.date ? (h.hasTime ? h.date.toLocaleString() : h.date.toLocaleDateString()) : '-'}</td>
                                             <td className="px-4 py-3 text-sm">
                                                 <span className={`px-2 py-1 rounded text-xs font-semibold ${h.type === 'Vente' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                                                     {h.type}
