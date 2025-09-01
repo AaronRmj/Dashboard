@@ -36,7 +36,7 @@ const OptimaServer = http.createServer(app);
 //initialise le socket avec le server http
 const io = new Server(OptimaServer, {
   cors: {
-    origin: '*', // Remplace par l'URL de ton frontend
+    origin: ["http://localhost:5173", "http://10.152.220.20:8080" ],
     methods: ["GET", "POST"],
     credentials: true
   }

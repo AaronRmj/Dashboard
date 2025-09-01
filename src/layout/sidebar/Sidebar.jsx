@@ -20,12 +20,12 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   const menuItems = [
     { label: "Tableau de bord", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
-    { label: "Vente de produit", to: "/Customers", icon: <IoPeopleOutline /> },
-    { label: "Achat de produit", to: "/StockSuppliers", icon: <CiBag1 /> },
+    { label: "Vente de produits", to: "/Customers", icon: <IoPeopleOutline /> },
+    { label: "Achat de produits", to: "/StockSuppliers", icon: <CiBag1 /> },
     { label: "Gérer stocks", to: "/ProductsStock", icon: <MdOutlineInventory /> },
     { label: "Gestion employés", to: "/EmployeeList", icon: <RiTeamLine /> },
-    { label: "Scan de badge", to: "/Todo", icon: <GrTask /> },
-    { label: "Historique ", to: "/History", icon: <MdHistory /> },
+    { label: "Pointage Employées", to: "/Todo", icon: <GrTask /> },
+    { label: "Historiques", to: "/History", icon: <MdHistory /> },
     { label: "Livraison Clients", to: "/Inbox", icon: <FaRegMessage /> },
   ];
 
