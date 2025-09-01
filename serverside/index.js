@@ -36,7 +36,7 @@ const OptimaServer = http.createServer(app);
 //initialise le socket avec le server http
 const io = new Server(OptimaServer, {
   cors: {
-    origin: 'http://localhost:5173', // Remplace par l'URL de ton frontend
+    origin: '*', // Remplace par l'URL de ton frontend
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -45,6 +45,20 @@ const io = new Server(OptimaServer, {
 //ecoute des evenements niveau server
 io.on('connection', (socket) => {
   console.log("Client connecté", socket.id);
+  try {
+    console.log('  handshake origin:', socket.handshake.headers.origin || 'n/a');
+    console.log('  remote address:', socket.handshake.address || socket.conn.remoteAddress || 'n/a');
+    console.log('  query:', socket.handshake.query || {});
+  } catch (e) {
+    console.warn('Erreur lecture handshake:', e);
+  }
+  // show current connected clients count
+  try {
+    const count = io.sockets.sockets.size || (io.engine && io.engine.clientsCount) || 0;
+    console.log('  clients connectés (count):', count);
+  } catch (e) {
+    // ignore
+  }
   
   socket.on('position-livreur', (data) => {
     console.log('📡 POSITION LIVREUR REÇUE:');
@@ -64,15 +78,21 @@ io.on('connection', (socket) => {
       type: 'position-update',
       position: data.position
     });
+    // Also emit to all clients (including sender) for easier testing across devices
+    try {
+      io.emit('position-update', { type: 'position-update', position: data.position });
+      console.log('  broadcast + io.emit position-update envoyé');
+    } catch (e) {
+      console.warn('Erreur emission io.emit:', e);
+    }
   });
 
-  socket.on('disconnect', () => {
-    console.log("Client déconnecté", socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log("Client déconnecté", socket.id, 'reason:', reason);
   });
 });
-OptimaServer.listen(PORT, ()=>{
-  console.log(`Serveur demarré sur le port ${PORT}`);
-  
+OptimaServer.listen(PORT, '0.0.0.0', ()=>{
+  console.log(`Serveur demarré sur le port ${PORT} (bound 0.0.0.0)`);
 })
 
 
@@ -82,24 +102,15 @@ db.sequelize.authenticate()
   .catch(err => console.error(" Erreur connexion BD :", err));
 
 
-db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+// db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
-  .then(() => {
-    console.log(" Synchronisation Sequelize ");
-    console.log("Modèles chargés :", Object.keys(db));
-  })
+//   .then(() => {
+//     console.log(" Synchronisation Sequelize ");
+//     console.log("Modèles chargés :", Object.keys(db));
+//   })
 
-  .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+//   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
-
-// Middlewares fonction avec execution  obtient et renvoie reponse 
-app.use(cors({
-  origin: 'http://localhost:5173', // ou ton frontend
-  methods: ['GET','POST','PUT','DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 
