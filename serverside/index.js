@@ -12,23 +12,22 @@ const { where, Op } = require('sequelize');
  const db = require('./models/db');
 
 const QRCode = require('qrcode');
-const crypto = require('crypto');
-const bwipjs = require('bwip-js');
-const app = express();
 const PORT = process.env.PORT || 8080;
-const JWT_SECRET = "tonSecretJWTUltraSecurise";
-// Middlewares fonction avec execution  obtient et renvoie reponse 
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-console.log("Valeur de JWT_SECRET :", JWT_SECRET);
-
-
 //importe classe server
 const { Server } = require('socket.io');
 
 //importe module http pour creer un serveur
 const http = require('http');
+
+// Middlewares fonction avec execution  obtient et renvoie reponse 
+const app = express();
+app.use(cors({
+  origin: 'http://localhost:5173', // ou ton frontend
+  methods: ['GET','POST','PUT','DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 const OptimaServer = http.createServer(app);
@@ -90,18 +89,6 @@ db.sequelize.authenticate()
 //   })
 
 //   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
-
-
-// Middlewares fonction avec execution  obtient et renvoie reponse 
-app.use(cors({
-  origin: 'http://localhost:5173', // ou ton frontend
-  methods: ['GET','POST','PUT','DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-
 
 
 // cree dossier uploads sinon existe 
@@ -669,7 +656,7 @@ app.get('/user-info', authMiddleware, async (req, res) => {
 
 
 
-//VENTE
+/*VENTE
 
 app.post("/Vente", async (req, res) => {
     try {
@@ -737,6 +724,422 @@ app.post("/Vente", async (req, res) => {
         console.error("Erreur globale :", error);
         res.status(500).json({ error: "Erreur interne du serveur" });
     }
+}); */
+
+app.post("/factures", authMiddleware, async (req, res) => {
+  const t = await db.sequelize.transaction();
+  try {
+    const { email, date, montantDonne, produits } = req.body;
+    const entrepriseToken = req.user.entreprise;
+
+    const entrepriseInfo = await db.admin.findOne({
+      where: { NomEntreprise: entrepriseToken },
+      attributes: ['NomEntreprise', 'Photo', 'Adresse', 'Telephone', 'Email']
+    });
+
+    if (!entrepriseInfo) {
+      await t.rollback();
+      return res.status(404).json({ error: "Informations de l'entreprise non trouvées" });
+    }
+
+    // Vérifier client
+    const client = await db.client.findOne({ where: { Email: email }, transaction: t });
+    if (!client) {
+      await t.rollback();
+      return res.status(404).json({ error: "Client introuvable" });
+    }
+
+    // Calculs
+    const totalHT = produits.reduce((sum, p) => sum + (p.prix / 1.2) * p.quantite, 0);
+    const tva = totalHT * 0.2;
+    const totalTTC = produits.reduce((sum, p) => sum + p.prix * p.quantite, 0);
+
+    const facture = await db.facture.create({
+      InfoClient: client.IdClient,
+      TotalHT: totalHT,
+      TVA: tva,
+      TotalTTC: totalTTC
+    }, { transaction: t });
+
+    // Enregistrer ventes + stockautom 
+    for (let p of produits) {
+      const produit = await db.produit.findOne({ where: { CodeProduit: p.code }, transaction: t });
+      if (!produit) {
+        await t.rollback();
+        return res.status(404).json({ error: `Produit ${p.code} introuvable` });
+      }
+
+      await db.vente.create({
+        Quantite: p.quantite,
+        Date: date,
+        CodeProduit: produit.IdProduit,
+        NumFacture: facture.IdFacture,
+        NumEmploye: 1
+      }, { transaction: t });
+
+      await db.produit.decrement("Stock", { by: p.quantite, where: { IdProduit: produit.IdProduit }, transaction: t });
+    }
+
+    await t.commit();
+
+    const doc = new PDFDocument({ 
+      margin: 40, 
+      size: "A4",
+      info: {
+        Title: `Facture ${facture.IdFacture}`,
+        Author: entrepriseInfo.NomEntreprise,
+        Subject: 'Facture de vente'
+      }
+    });
+    
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=Facture_${facture.IdFacture}_${client.Nom}.pdf`);
+    doc.pipe(res);
+
+    const now = new Date();
+    const dateGeneration = now.toLocaleDateString("fr-FR");
+    const heureGeneration = now.toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' });
+
+    const formatVola = (value, decimals = 2) => {
+      let parts = value.toFixed(decimals).split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      return parts.join(',') + ' Ar';
+    };
+
+    const pageWidth = doc.page.width - 80; 
+    const leftMargin = 40;
+    const rightMargin = 40;
+
+    let currentY = 50;
+
+    if (entrepriseInfo.Photo) {
+      const logoPath = path.join(__dirname, 'uploads', entrepriseInfo.Photo);
+      if (fs.existsSync(logoPath)) {
+        const logoSize = 60;
+        const logoX = (doc.page.width - logoSize) / 2;
+        doc.image(logoPath, logoX, currentY, { width: logoSize, height: logoSize });
+        currentY += logoSize + 15;
+      }
+    }
+
+    doc.fontSize(20).font('Helvetica-Bold').fillColor('#2c3e50');
+    const nomEntreprise = entrepriseInfo.NomEntreprise || entrepriseToken;
+    doc.text(nomEntreprise, leftMargin, currentY, { align: 'center', width: pageWidth });
+    currentY += 30;
+
+    doc.fontSize(10).font('Helvetica').fillColor('#7f8c8d');
+    if (entrepriseInfo.Telephone) {
+      doc.text(`Tél: ${entrepriseInfo.Telephone}`, leftMargin, currentY, { align: 'center', width: pageWidth });
+      currentY += 12;
+    }
+    if (entrepriseInfo.Adresse) {
+      doc.text(entrepriseInfo.Adresse, leftMargin, currentY, { align: 'center', width: pageWidth });
+      currentY += 15;
+    }
+    if (entrepriseInfo.Email) {
+      doc.text(`Email: ${entrepriseInfo.Email}`, leftMargin, currentY, { align: 'center', width: pageWidth });
+      currentY += 15;
+    }
+
+    currentY += 10;
+    doc.moveTo(leftMargin, currentY)
+       .lineTo(doc.page.width - rightMargin, currentY)
+       .lineWidth(2)
+       .strokeColor('#3498db')
+       .stroke();
+    currentY += 25;
+
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#2c3e50');
+    doc.text('FACTURE', leftMargin, currentY, { align: 'center', width: pageWidth });
+    currentY += 35;
+
+    const colWidth = pageWidth / 2 - 10;
+    const col1X = leftMargin;
+    const col2X = leftMargin + colWidth + 20;
+    const infoStartY = currentY;
+
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#34495e');
+    doc.text('INFORMATIONS FACTURE', col1X, currentY);
+    currentY += 20;
+    doc.fontSize(10).font('Helvetica').fillColor('#2c3e50');
+    doc.text(`N° Facture: ${facture.IdFacture}`, col1X, currentY);
+    currentY += 15;
+    doc.text(`Date facture: ${date}`, col1X, currentY);
+    currentY += 15;
+    doc.text(`Émise le: ${dateGeneration} à ${heureGeneration}`, col1X, currentY);
+
+    currentY = infoStartY;
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#34495e');
+    doc.text('FACTURÉ À', col2X, currentY);
+    currentY += 20;
+    doc.fontSize(10).font('Helvetica').fillColor('#2c3e50');
+    doc.text(client.Nom, col2X, currentY);
+    currentY += 15;
+    doc.text(client.Email, col2X, currentY);
+    currentY += 15;
+    if (client.Tel) { doc.text(`Tél: ${client.Tel}`, col2X, currentY); currentY += 15; }
+    if (client.Adresse) { doc.text(client.Adresse, col2X, currentY, { width: colWidth }); }
+    currentY += 35;
+
+    // Tableau Produits
+    const tableTop = currentY;
+    const tableLeft = leftMargin;
+    const tableWidth = pageWidth;
+    const colDesignation = tableWidth * 0.4;
+    const colQuantite = tableWidth * 0.15;
+    const colPrixUnit = tableWidth * 0.2;
+    const colTotal = tableWidth * 0.25;
+
+    doc.rect(tableLeft, tableTop, tableWidth, 25).fillAndStroke('#3498db', '#3498db');
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
+    doc.text('DÉSIGNATION', tableLeft + 5, tableTop + 8, { width: colDesignation });
+    doc.text('QTÉ', tableLeft + colDesignation + 5, tableTop + 8, { width: colQuantite, align: 'center' });
+    doc.text('PRIX UNITAIRE', tableLeft + colDesignation + colQuantite + 5, tableTop + 8, { width: colPrixUnit, align: 'right' });
+    doc.text('TOTAL', tableLeft + colDesignation + colQuantite + colPrixUnit + 5, tableTop + 8, { width: colTotal - 10, align: 'right' });
+
+    currentY = tableTop + 25;
+    doc.fontSize(9).font('Helvetica').fillColor('#2c3e50');
+    let isEvenRow = false;
+
+    produits.forEach((produit) => {
+      const rowHeight = 20;
+      if (isEvenRow) { doc.rect(tableLeft, currentY, tableWidth, rowHeight).fill('#f8f9fa'); }
+      doc.rect(tableLeft, currentY, tableWidth, rowHeight).stroke('#ecf0f1');
+      doc.fillColor('#2c3e50');
+      doc.text(produit.nom, tableLeft + 5, currentY + 6, { width: colDesignation - 5 });
+      doc.text(produit.quantite.toString(), tableLeft + colDesignation + 5, currentY + 6, { width: colQuantite, align: 'center' });
+      doc.text(formatVola(produit.prix), tableLeft + colDesignation + colQuantite + 5, currentY + 6, { width: colPrixUnit, align: 'right' });
+      doc.text(formatVola(produit.prix * produit.quantite), tableLeft + colDesignation + colQuantite + colPrixUnit + 5, currentY + 6, { width: colTotal - 10, align: 'right' });
+      currentY += rowHeight;
+      isEvenRow = !isEvenRow;
+    });
+
+    doc.rect(tableLeft, tableTop, tableWidth, currentY - tableTop).stroke('#bdc3c7');
+    currentY += 20;
+
+    // Section Totaux
+    const totalSectionLeft = tableLeft + tableWidth * 0.6;
+    const totalSectionWidth = tableWidth * 0.4;
+    doc.fontSize(10).font('Helvetica').fillColor('#2c3e50');
+    doc.text('Sous-total HT:', totalSectionLeft, currentY, { width: totalSectionWidth * 0.6 });
+    doc.text(formatVola(totalHT), totalSectionLeft + totalSectionWidth * 0.6, currentY, { width: totalSectionWidth * 0.4, align: 'right' });
+    currentY += 15;
+    doc.text('TVA (20%):', totalSectionLeft, currentY, { width: totalSectionWidth * 0.6 });
+    doc.text(formatVola(tva), totalSectionLeft + totalSectionWidth * 0.6, currentY, { width: totalSectionWidth * 0.4, align: 'right' });
+    currentY += 10;
+    doc.moveTo(totalSectionLeft, currentY).lineTo(tableLeft + tableWidth, currentY).lineWidth(1).strokeColor('#bdc3c7').stroke();
+    currentY += 10;
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#e74c3c');
+    doc.text('TOTAL TTC:', totalSectionLeft, currentY, { width: totalSectionWidth * 0.6 });
+    doc.text(formatVola(totalTTC), totalSectionLeft + totalSectionWidth * 0.6, currentY, { width: totalSectionWidth * 0.4, align: 'right' });
+    currentY += 25;
+
+    // Section Paiement
+    doc.fontSize(10).font('Helvetica').fillColor('#2c3e50');
+    doc.text('Montant versé:', totalSectionLeft, currentY, { width: totalSectionWidth * 0.6 });
+    doc.text(formatVola(montantDonne), totalSectionLeft + totalSectionWidth * 0.6, currentY, { width: totalSectionWidth * 0.4, align: 'right' });
+    currentY += 15;
+
+    const montantRendu = montantDonne - totalTTC;
+    const couleurRendu = montantRendu >= 0 ? '#27ae60' : '#e74c3c';
+    doc.fillColor(couleurRendu);
+    doc.text('Montant rendu:', totalSectionLeft, currentY, { width: totalSectionWidth * 0.6 });
+    doc.text(formatVola(montantRendu), totalSectionLeft + totalSectionWidth * 0.6, currentY, { width: totalSectionWidth * 0.4, align: 'right' });
+    currentY += 35;
+
+    // Générer QR code facture
+    const qrData = JSON.stringify({
+      facture: facture.IdFacture,
+      client: client.Nom,
+      produits: produits.map(p => ({ nom: p.nom, quantite: p.quantite, total: p.prix * p.quantite })),
+      totalTTC: totalTTC
+    });
+    const qrTempPath = path.join(__dirname, 'temp_qr.png');
+    await QRCode.toFile(qrTempPath, qrData, { width: 80, margin: 1 });
+    doc.image(qrTempPath, totalSectionLeft - 190, currentY - 110, { width: 100, height: 100 });
+    fs.unlinkSync(qrTempPath);
+
+    // Pied de page
+    const footerY = doc.page.height - 100;
+    doc.moveTo(leftMargin, footerY).lineTo(doc.page.width - rightMargin, footerY).lineWidth(1).strokeColor('#bdc3c7').stroke();
+    doc.fontSize(10).font('Helvetica-Bold').fillColor('#3498db');
+    doc.text('Nous vous remercions de votre visite et espérons avoir le plaisir de vous accueillir à nouveau très bientôt.', leftMargin, footerY + 15, { align: 'center', width: pageWidth });
+    doc.fontSize(8).font('Helvetica').fillColor('#95a5a6');
+    doc.text('Cette facture a été générée électroniquement.', leftMargin, footerY + 35, { align: 'center', width: pageWidth });
+
+    doc.end();
+
+  } catch (err) {
+    await t.rollback();
+    console.error("Erreur facture:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Erreur lors de la création de la facture" });
+    }
+  }
+});
+
+
+// Vérifier si un client existe par email
+app.post("/clients/verify", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email requis" });
+
+    const client = await db.client.findOne({ where: { Email: email } });
+    if (!client) return res.status(404).json({ error: "Client introuvable" });
+
+    res.json(client);
+  } catch (err) {
+    console.error("Erreur vérification client:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+app.post("/clients", authMiddleware, async (req, res) => {
+  const transaction = await db.sequelize.transaction();
+  const { createCanvas, loadImage } = require("canvas");
+  const PDFDocument = require("pdfkit");
+  const path = require("path");
+  const fs = require("fs");
+  const QRCode = require("qrcode");
+
+  try {
+    const { Nom, Email, Telephone, Adresse } = req.body;
+    const entrepriseToken = req.user.entreprise;
+
+    if (!Nom || !Telephone || !Adresse || !Email) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "Nom, Email, Tel et Adresse sont requis" });
+    }
+
+    let client = await db.client.findOne({ where: { Tel: Telephone }, transaction });
+    if (!client) {
+      client = await db.client.create({ Nom, Adresse, Tel: Telephone, Email }, { transaction });
+    }
+
+    const entrepriseInfo = await db.admin.findOne({
+      where: { NomEntreprise: entrepriseToken },
+      attributes: ["NomEntreprise", "Photo", "Adresse", "Telephone"],
+      transaction
+    });
+    if (!entrepriseInfo) {
+      await transaction.rollback();
+      return res.status(404).json({ error: "Informations de l'entreprise non trouvées" });
+    }
+
+    // QR code client
+    const qrData = JSON.stringify({ Nom, Email, Telephone, Adresse });
+    const qrBuffer = await QRCode.toBuffer(qrData, {
+      errorCorrectionLevel: 'H',
+      type: 'png',
+      width: 150,
+      margin: 1,
+      color: { dark: '#1b263b', light: '#ffffff' }
+    });
+
+    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=Carte_Client_${Nom}.pdf`);
+    doc.pipe(res);
+
+    const pageWidth = doc.page.width;
+
+    const canvasBG = createCanvas(595, 842);
+    const ctxBG = canvasBG.getContext("2d");
+    const gradient = ctxBG.createLinearGradient(0, 0, canvasBG.width, canvasBG.height);
+    gradient.addColorStop(0, '#2e3c50');
+    gradient.addColorStop(0.5, '#4f628e');
+    gradient.addColorStop(1, '#9db4d3');
+    ctxBG.fillStyle = gradient;
+    ctxBG.fillRect(0, 0, canvasBG.width, canvasBG.height);
+    const bgBuffer = canvasBG.toBuffer("image/png");
+    doc.image(bgBuffer, 0, 0, { width: doc.page.width, height: doc.page.height });
+
+    let currentY = 50;
+    if (entrepriseInfo.Photo) {
+      const logoPath = path.join(__dirname, "uploads", entrepriseInfo.Photo);
+      if (fs.existsSync(logoPath)) {
+        const logoWidth = 70;
+        const logoHeight = 70;
+        const logoX = (pageWidth - logoWidth) / 2.2;
+        doc.image(logoPath, logoX, currentY, { width: logoWidth, height: logoHeight });
+        currentY += logoHeight + 15;
+      }
+    }
+
+    doc.fontSize(24).font("Helvetica-Bold").fillColor('#ffffff')
+       .text(entrepriseInfo.NomEntreprise || entrepriseToken, 0, currentY, { align: "center" });
+    currentY += 28;
+    doc.fontSize(12).font("Helvetica").fillColor('#e0e0e0')
+       .text(entrepriseInfo.Telephone || "", { align: "center" });
+    currentY += 15;
+    doc.text(entrepriseInfo.Adresse || "", { align: "center" });
+    currentY += 40;
+
+    const leftX = 50;
+    doc.fontSize(20).font("Helvetica-Bold").fillColor('#ffffff')
+       .text("Carte Client", leftX, currentY, { align: "left" });
+    currentY += 30;
+
+    doc.fontSize(14).font("Helvetica").fillColor('#ffffff');
+    doc.text(`Nom: ${Nom}`, leftX, currentY);
+    currentY += 20;
+    doc.text(`Email: ${Email}`, leftX, currentY);
+    currentY += 20;
+    doc.text(`Tel: ${Telephone}`, leftX, currentY);
+    currentY += 20;
+    doc.text(`Adresse: ${Adresse}`, leftX, currentY);
+
+    const qrX = pageWidth - 200; 
+    const qrY = currentY - 80;    
+    doc.image(qrBuffer, qrX, qrY, { width: 100, height: 100 });
+
+    // Ligne graphique
+    const lineY = qrY + 140;
+    doc.moveTo(leftX, lineY)
+       .lineTo(pageWidth - leftX, lineY)
+       .lineWidth(4)
+       .strokeColor('#ffffffff')
+       .dash(5, { space: 5 })
+       .stroke();
+
+    await transaction.commit();
+    doc.end();
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Erreur :", error);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: "Erreur interne du serveur", details: error.message });
+    }
+  }
+});
+
+
+// Vérifier un produit par son code
+ app.get("/produits-scan/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const regexCode = /^[A-Za-z0-9]{3,20}$/;
+    if (!regexCode.test(code)) {
+      return res.status(400).json({ error: "Code produit invalide" });
+    }
+
+    const produit = await db.produit.findOne({
+      where: { CodeProduit: code },
+      attributes: ["IdProduit", "Description", "PVunitaire", "Stock", "CodeProduit"],
+    });
+
+    if (!produit) {
+      return res.status(404).json({ error: "Produit introuvable" });
+    }
+
+    res.json(produit);
+  } catch (error) {
+    console.error("Erreur produit :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // GET list of ventes (for history view)
@@ -816,10 +1219,9 @@ app.post('/update-photo', upload.single('photo'), async (req, res) => {
     res.status(500).json({ error: "Erreur serveur lors de la mise à jour de la photo." });
   }
 });
-
-
 app.post("/Achat", upload.any(), async (req, res) => {
   const transaction = await db.sequelize.transaction();
+
 
   try {
     const { Date, InfoFournisseur, Telephone, Email } = req.body;
@@ -827,7 +1229,6 @@ app.post("/Achat", upload.any(), async (req, res) => {
       return res.status(400).json({ error: "InfoFournisseur et Date sont requis" });
     }
 
-    // Parse produits JSON, vérifier que c’est un tableau et non vide
     let produits;
     try {
       produits = JSON.parse(req.body.produits);
@@ -838,7 +1239,6 @@ app.post("/Achat", upload.any(), async (req, res) => {
       return res.status(400).json({ error: "Au moins un produit est requis" });
     }
 
-    // Vérifier chaque produit
     for (const p of produits) {
       if (
         !p.NomProduit || typeof p.NomProduit !== "string" || p.NomProduit.trim() === "" ||
@@ -852,7 +1252,6 @@ app.post("/Achat", upload.any(), async (req, res) => {
       }
     }
 
-    // Trouver ou créer le fournisseur
     let fournisseur = await db.fournisseur.findOne({
       where: { Entreprise: InfoFournisseur },
       transaction,
@@ -864,7 +1263,6 @@ app.post("/Achat", upload.any(), async (req, res) => {
       );
     }
 
-    // Traitement des produits + achats
     const achatsEffectues = [];
 
     for (let i = 0; i < produits.length; i++) {
@@ -872,31 +1270,56 @@ app.post("/Achat", upload.any(), async (req, res) => {
       const quantiteNum = Number(Quantite);
       const pachatNum = Number(Pachat);
       const pventeNum = Number(Pvente);
-
       const fichier = req.files[i];
       const imageProduit = fichier ? fichier.filename : null;
 
-      // Générer code-barres
       const hash = crypto.createHash('sha1').update(NomProduit).digest('hex').substring(0, 12);
-      const codeBarreTexte = hash.toUpperCase();
+      const codeProduitTexte = hash.toUpperCase();
 
       const codeBarreDir = path.join(__dirname, "uploads", "codebarres");
       if (!fs.existsSync(codeBarreDir)) fs.mkdirSync(codeBarreDir, { recursive: true });
-      const codeBarreImagePath = path.join(codeBarreDir, `${codeBarreTexte}.png`);
+
+      const qrFileName = `${codeProduitTexte}.png`;
+      const codeBarreImagePath = path.join(codeBarreDir, qrFileName);
 
       if (!fs.existsSync(codeBarreImagePath)) {
-        const buffer = await bwipjs.toBuffer({
-          bcid: 'code128',
-          text: codeBarreTexte,
-          scale: 3,
-          height: 10,
-          includetext: true,
-          textxalign: 'center',
-        });
-        fs.writeFileSync(codeBarreImagePath, buffer);
+        try {
+          const tempQRPath = path.join(codeBarreDir, `temp_${codeProduitTexte}.png`);
+          await QRCode.toFile(tempQRPath, codeProduitTexte, {
+            errorCorrectionLevel: 'H',
+            type: 'png',
+            quality: 1,
+            margin: 4,
+            color: { dark: '#000000', light: '#FFFFFF' },
+            width: 300,
+            scale: 8
+          });
+
+          const canvas = createCanvas(300, 370);
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, 300, 370);
+          const qrImage = await loadImage(tempQRPath);
+          ctx.drawImage(qrImage, 0, 0, 300, 300);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 300, 300, 70);
+          ctx.fillStyle = '#000000';
+          ctx.font = 'bold 16px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(codeProduitTexte, 150, 335);
+          fs.writeFileSync(codeBarreImagePath, canvas.toBuffer('image/png'));
+          fs.unlinkSync(tempQRPath);
+        } catch {
+          await QRCode.toFile(codeBarreImagePath, codeProduitTexte, {
+            errorCorrectionLevel: 'H',
+            width: 300,
+            margin: 4,
+            color: { dark: '#000000', light: '#FFFFFF' }
+          });
+        }
       }
 
-      // Trouver produit existant
       let produit = await db.produit.findOne({ where: { Description: NomProduit }, transaction });
 
       if (produit) {
@@ -904,7 +1327,8 @@ app.post("/Achat", upload.any(), async (req, res) => {
         if (produit.PAunitaire !== pachatNum) produit.PAunitaire = pachatNum;
         if (produit.PVunitaire !== pventeNum) produit.PVunitaire = pventeNum;
         if (imageProduit) produit.Image = `/uploads/${imageProduit}`;
-        produit.CodeBarre = `/uploads/codebarres/${codeBarreTexte}.png`;
+        produit.CodeBarre = `/uploads/codebarres/${codeProduitTexte}.png`;
+        produit.CodeProduit = codeProduitTexte;
         await produit.save({ transaction });
       } else {
         produit = await db.produit.create({
@@ -913,7 +1337,8 @@ app.post("/Achat", upload.any(), async (req, res) => {
           PAunitaire: pachatNum,
           PVunitaire: pventeNum,
           Image: imageProduit ? `/uploads/${imageProduit}` : null,
-          CodeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+          CodeBarre: `/uploads/codebarres/${codeProduitTexte}.png`,
+          CodeProduit: codeProduitTexte
         }, { transaction });
       }
 
@@ -928,27 +1353,39 @@ app.post("/Achat", upload.any(), async (req, res) => {
         fournisseur: InfoFournisseur,
         produit: NomProduit,
         quantite: quantiteNum,
-        codeBarre: `/uploads/codebarres/${codeBarreTexte}.png`,
+        codeBarre: `/uploads/codebarres/${codeProduitTexte}.png`,
+        codeProduit: codeProduitTexte,
         image: imageProduit ? `/uploads/${imageProduit}` : null,
         achatId: achat.id,
+        produitId: produit.id || produit.IdProduit
       });
     }
 
     await transaction.commit();
+
     return res.status(201).json({
       message: "Achats enregistrés avec succès",
       achats: achatsEffectues,
+      fournisseur: {
+        id: fournisseur.id || fournisseur.IdFournisseur,
+        entreprise: fournisseur.Entreprise,
+        telephone: fournisseur.Telephone,
+        email: fournisseur.Email
+      }
     });
 
   } catch (error) {
     await transaction.rollback();
-    console.error("Erreur lors de l'achat :", error);
-    return res.status(500).json({ error: "Une erreur est survenue", details: error.message });
+    return res.status(500).json({ 
+      error: "Une erreur est survenue lors du traitement de l'achat", 
+      details: error.message 
+    });
   }
 });
 
+
 // GET list of achats (for history view)
-app.get('/Achat', async (req, res) => {
+app.get('/histoAchat', async (req, res) => {
   try {
     const achats = await db.achat.findAll({
       include: [
@@ -963,6 +1400,7 @@ app.get('/Achat', async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
 
 
 // BENEFICE total ou par produit ou par date
