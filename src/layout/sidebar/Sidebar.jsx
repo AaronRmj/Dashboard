@@ -5,6 +5,7 @@ import { FaRegMessage } from "react-icons/fa6";
 import { GrTask } from "react-icons/gr";
 import { RiTeamLine } from "react-icons/ri";
 import { CiBag1 } from "react-icons/ci";
+import { IoLocationOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from "react-router-dom";
 
 
@@ -20,14 +21,14 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   const menuItems = [
     { label: "Tableau de bord", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
-    { label: "Vente de produit", to: "/Customers", icon: <IoPeopleOutline /> },
-    
-    { label: "Achat de produit", to: "/StockSuppliers", icon: <CiBag1 /> },
+    { label: "Vente de produits", to: "/Customers", icon: <IoPeopleOutline /> },
+    { label: "Achat de produits", to: "/StockSuppliers", icon: <CiBag1 /> },
     { label: "Gérer stocks", to: "/ProductsStock", icon: <MdOutlineInventory /> },
     { label: "Gestion employés", to: "/EmployeeList", icon: <RiTeamLine /> },
-    { label: "Scan de badge", to: "/Todo", icon: <GrTask /> },
-    { label: "Chat", to: "/Inbox", icon: <FaRegMessage /> },
-    { label: "Historique ", to: "/History", icon: <MdHistory /> },
+    { label: "Pointage Employées", to: "/Todo", icon: <GrTask /> },
+    { label: "Historiques", to: "/History", icon: <MdHistory /> },
+    { label: "Livraison Clients", to: "/Map", icon: <IoLocationOutline /> },
+    { label: "Messagerie", to: "/Messagerie", icon: <FaRegMessage /> },
   ];
 
   return (

@@ -169,7 +169,7 @@ const StockSuppliers = () => {
 
       {!inVoice ? (
         <section className="mx-auto space-x-6 lg:max-w-md w-2xs h-screen flex justify-center items-center">
-          <Button label="Create New Invoice" onClick={handleInvoice} />
+          <Button label="Achecter des produits" onClick={handleInvoice} />
         </section>
       ) : (
         <section className="p-3 overflow-hidden flex justify-center">

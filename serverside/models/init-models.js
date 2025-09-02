@@ -37,10 +37,12 @@ var heureDebut = _heureDebut(sequelize, DataTypes);
   produit.hasMany(achat, { foreignKey: "NomProduit"});
   vente.belongsTo(produit, { foreignKey: "CodeProduit"});
   produit.hasMany(vente, { foreignKey: "CodeProduit"});
-  achat.belongsTo(fournisseur, {foreignKey :"InfoFournisseur"});
-  fournisseur.hasMany(achat, {foreignKey : "InfoFournisseur"});
-    presence.belongsTo(employe, { foreignKey: "NumEmploye" });
+  // InfoFournisseur stores the fournisseur Entreprise (string), not the PK IdFournisseur
+  // Tell Sequelize to join using the Entreprise column as targetKey/sourceKey
+  achat.belongsTo(fournisseur, { foreignKey: "InfoFournisseur", targetKey: "Entreprise" });
+  fournisseur.hasMany(achat, { foreignKey: "InfoFournisseur", sourceKey: "Entreprise" });
   employe.hasMany(presence, { foreignKey: "NumEmploye" });
+  presence.belongsTo(employe, { foreignKey: "NumEmploye" });
   
   return {
     admin,

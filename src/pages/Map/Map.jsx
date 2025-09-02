@@ -1,12 +1,12 @@
 import React from "react";
-
-const Inbox = () =>{
+import Location from "../../components/ui/Location";
+const Map = () =>{
         return(
             <div className="flex justify-center items-center h-screen bg-gray-100">
-                <h1 className="text-3xl font-bold">Discuss here</h1>
+                <Location />
             </div>
         )
 }
 
 
-export default Inbox;
+export default Map;

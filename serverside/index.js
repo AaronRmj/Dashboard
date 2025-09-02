@@ -7,40 +7,24 @@ const PDFDocument = require('pdfkit');
 const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 require('dotenv').config();
 const { where, Op } = require('sequelize');
  const db = require('./models/db');
 
+
 const QRCode = require('qrcode');
-const crypto = require('crypto');
-
-
-
-
-
-
-// Connexion à la BD
-db.sequelize.authenticate()
-  .then(() => console.log(" Connecté à la BD "))
-  .catch(err => console.error(" Erreur connexion BD :", err));
-
-
-/*db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
-
-  .then(() => {
-    console.log(" Synchronisation Sequelize ");
-    console.log("Modèles chargés :", Object.keys(db));
-  })
-
-  .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
-
-
-const app = express();
 const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET;
-console.log("Valeur de JWT_SECRET :", JWT_SECRET);
+console.log("Using JWT: " + JWT_SECRET);
+//importe classe server
+const { Server } = require('socket.io');
+
+//importe module http pour creer un serveur
+const http = require('http');
 
 // Middlewares fonction avec execution  obtient et renvoie reponse 
+const app = express();
 app.use(cors({
   origin: 'http://localhost:5173', // ou ton frontend
   methods: ['GET','POST','PUT','DELETE'],
@@ -48,6 +32,88 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+const OptimaServer = http.createServer(app);
+
+//initialise le socket avec le server http
+const io = new Server(OptimaServer, {
+  cors: {
+    origin: ["http://localhost:5173", "http://10.152.220.20:8080" ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+//ecoute des evenements niveau server
+io.on('connection', (socket) => {
+  console.log("Client connecté", socket.id);
+  try {
+    console.log('  handshake origin:', socket.handshake.headers.origin || 'n/a');
+    console.log('  remote address:', socket.handshake.address || socket.conn.remoteAddress || 'n/a');
+    console.log('  query:', socket.handshake.query || {});
+  } catch (e) {
+    console.warn('Erreur lecture handshake:', e);
+  }
+  // show current connected clients count
+  try {
+    const count = io.sockets.sockets.size || (io.engine && io.engine.clientsCount) || 0;
+    console.log('  clients connectés (count):', count);
+  } catch (e) {
+    // ignore
+  }
+  
+  socket.on('position-livreur', (data) => {
+    console.log('📡 POSITION LIVREUR REÇUE:');
+    console.log('ID:', data.id);
+    console.log('Position:', data.position);
+    console.log('Timestamp:', data.timestamp);
+    console.log('----------------------');
+    
+    // 1. Envoyer au livreur lui-même
+    socket.emit('ma-position', {
+      type: 'ma-position',
+      position: data.position
+    });
+
+    // 2. Envoyer aux gestionnaires
+    socket.broadcast.emit('position-update', {
+      type: 'position-update',
+      position: data.position
+    });
+    // Also emit to all clients (including sender) for easier testing across devices
+    try {
+      io.emit('position-update', { type: 'position-update', position: data.position });
+      console.log('  broadcast + io.emit position-update envoyé');
+    } catch (e) {
+      console.warn('Erreur emission io.emit:', e);
+    }
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log("Client déconnecté", socket.id, 'reason:', reason);
+  });
+});
+OptimaServer.listen(PORT, '0.0.0.0', ()=>{
+  console.log(`Serveur demarré sur le port ${PORT} (bound 0.0.0.0)`);
+})
+
+
+//Connexion à la BD
+db.sequelize.authenticate()
+  .then(() => console.log(" Connecté à la BD "))
+  .catch(err => console.error(" Erreur connexion BD :", err));
+
+
+// db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+
+//   .then(() => {
+//     console.log(" Synchronisation Sequelize ");
+//     console.log("Modèles chargés :", Object.keys(db));
+//   })
+
+//   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
 
 // cree dossier uploads sinon existe 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -58,11 +124,12 @@ if (!fs.existsSync(uploadDir)) {
 // Multer gerance ficher image reetra +lire acceder enregitre 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+  destination: (req, file, cb) => cb(null,path.join(__dirname, 'uploads')),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const uniqueName = `photo-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+    const uniqueName = `file-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
     cb(null, uniqueName);
-  }
+  },
 });
 
 const upload = multer({ storage });
@@ -1099,6 +1166,24 @@ app.post("/clients", authMiddleware, async (req, res) => {
   }
 });
 
+// GET list of ventes (for history view)
+app.get('/Vente', async (req, res) => {
+  try {
+    const ventes = await db.vente.findAll({
+      include: [
+        { model: db.produit },
+        { model: db.employe },
+        { model: db.facture, include: [{ model: db.client }] }
+      ],
+      order: [['Date', 'DESC']]
+    });
+    res.status(200).json(ventes);
+  } catch (err) {
+    console.error('Erreur GET /Vente :', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 
 
 // Route MAJ photo de profil (admin ou employe)
@@ -1315,10 +1400,29 @@ app.post("/Achat", upload.any(), async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
+    console.log("Erreur achat :", error);
     return res.status(500).json({ 
       error: "Une erreur est survenue lors du traitement de l'achat", 
       details: error.message 
     });
+  }
+});
+
+
+// GET list of achats (for history view)
+app.get('/histoAchat', async (req, res) => {
+  try {
+    const achats = await db.achat.findAll({
+      include: [
+        { model: db.produit },
+        { model: db.fournisseur }
+      ],
+      order: [['Date', 'DESC']]
+    });
+    res.status(200).json(achats);
+  } catch (err) {
+    console.error('Erreur GET /Achat :', err);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
@@ -1344,7 +1448,9 @@ app.post("/Benefice", async (req, res)=>{
         let totalQuantite = 0;
         // Produit trouvé par findAll donc array. Mieux si mappée et .toJSON() d'abord car là ça sera du clean [{},{},...] mais bon ça marche toujours 
         for(i of Produit)
-        {
+        {        // ...existing code...
+        const imageProduit = req.file ? req.file.filename : null;
+        // ...existing code...
             totalQuantite += i["Quantite"];
         }
         const CA = totalQuantite * prixVente.PVunitaire; 
@@ -1769,6 +1875,84 @@ if (entrepriseInfo.Photo) {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`serveur au port ${PORT}`);
+
+app.get("/dashboard-stats", async (req, res) => {
+  try {
+    // nombre de clients et commandes
+    const nbClients = await db.client.count();
+    const nbCommandes = await db.facture.count();
+
+    // Charger tous les produits (PAunitaire / PVunitaire)
+    const produits = await db.produit.findAll({
+      attributes: ["IdProduit", "Description", "PAunitaire", "PVunitaire"]
+    });
+    const prodByDesc = new Map(produits.map(p => [p.Description, p]));
+    const prodById = new Map(produits.map(p => [p.IdProduit, p]));
+
+    // ACHATS : la table achat contient NomProduit et Quantite -> on récupère le PA via Description
+    const achats = await db.achat.findAll(); // on prend tous les achats
+    const totalAchats = achats.reduce((sum, achat) => {
+      const q = Number(achat.Quantite) || 0;
+      const prod = prodByDesc.get(achat.NomProduit);
+      const pa = prod ? Number(prod.PAunitaire) || 0 : 0;
+      return sum + q * pa;
+    }, 0);
+
+    // VENTES : la table vente contient Quantite et CodeProduit (FK) ; on essaye d'utiliser l'include sinon fallback sur la map
+    const ventes = await db.vente.findAll({
+      include: [{ model: db.produit, attributes: ["PVunitaire", "IdProduit"] }]
+    });
+    const totalVentes = ventes.reduce((sum, vente) => {
+      const q = Number(vente.Quantite) || 0;
+      let pv = vente.produit ? Number(vente.produit.PVunitaire) || 0 : undefined;
+      if (pv === undefined) {
+        const prod = prodById.get(vente.CodeProduit);
+        pv = prod ? Number(prod.PVunitaire) || 0 : 0;
+      }
+      return (sum + q * pv) ;
+    }, 0);
+
+    res.json({
+      nbClients,
+      nbCommandes,
+      totalAchats,
+      totalVentes
+    });
+  } catch (err) {
+    console.error("Erreur /dashboard-stats :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
+
+app.get("/best-sellers", async (req, res) => {
+  try {
+    // Regroupe les ventes par produit et somme la quantité
+    const ventes = await db.vente.findAll({
+      attributes: [
+        "CodeProduit",
+        [db.sequelize.fn("SUM", db.sequelize.col("Quantite")), "totalVendu"]
+      ],
+      group: ["CodeProduit"],
+      include: [{
+        model: db.produit,
+        attributes: ["Description"]
+      }],
+      order: [[db.sequelize.literal("totalVendu"), "DESC"]],
+      limit: 3 // Top 3
+    });
+
+    // Formatage pour le frontend
+    const result = ventes.map(v => ({
+      label: v.produit.Description,
+      value: v.dataValues.totalVendu
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error("Erreur best-sellers :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+// app.listen(PORT, () => {
+//     console.log(`serveur au port ${PORT}`);
+// });
