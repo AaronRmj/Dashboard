@@ -1,6 +1,6 @@
 import React from "react";
 import Location from "../../components/ui/Location";
-const Inbox = () =>{
+const Map = () =>{
         return(
             <div className="flex justify-center items-center h-screen bg-gray-100">
                 <Location />
@@ -9,4 +9,4 @@ const Inbox = () =>{
 }
 
 
-export default Inbox;
+export default Map;

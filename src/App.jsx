@@ -9,7 +9,8 @@ import ProductStock from "./pages/productstock/ProductStock";
 import StockSuppliers from "./pages/stocksuppliers/StockSuppliers";
 import History from "./pages/history/History";
 import Todo from "./pages/todo/Todo";
-import Inbox from "./pages/inbox/Inbox";
+import Map from "./pages/Map/Map";
+import Messagerie from "./pages/Messagerie/Messagerie";
 import SignupPage from "./pages/auth/sign/SignupPage";
 import MotDePasseOublie from "./pages/auth/login/Mdpoublie";
 import ResetPassword from "./pages/auth/login/ResetPassword";
@@ -86,10 +87,18 @@ function App() {
             }
           />
           <Route
-            path="/inbox"
+            path="/Map"
             element={
               <PrivateRoute>
-                <Layout><Inbox /></Layout>
+                <Layout><Map /></Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/Messagerie"
+            element={
+              <PrivateRoute>
+                <Layout><Messagerie /></Layout>
               </PrivateRoute>
             }
           />
