@@ -170,7 +170,7 @@ const EmployeeList = () => {
                 >
                   <div>
                     <img
-                      src={`http://localhost:8080/uploads/${employee.Photo}`} // tsisy uploads tsony ze otranio reetra 
+                      src={`http://localhost:8080/${employee.Photo}`} // tsisy uploads tsony ze otranio reetra 
                       alt="Profil"
                       className="rounded-full w-35 h-35 mx-auto object-cover mb-4 border-2 border-gray-400"
                     />
