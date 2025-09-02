@@ -5,7 +5,7 @@ import { FaRegMessage } from "react-icons/fa6";
 import { GrTask } from "react-icons/gr";
 import { RiTeamLine } from "react-icons/ri";
 import { CiBag1 } from "react-icons/ci";
-import { FaLocationDot } from 'react-icons/fa6';
+import { IoLocationOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from "react-router-dom";
 
 
@@ -27,7 +27,7 @@ const Sidebar = ({ isSidebarOpen }) => {
     { label: "Gestion employés", to: "/EmployeeList", icon: <RiTeamLine /> },
     { label: "Pointage Employées", to: "/Todo", icon: <GrTask /> },
     { label: "Historiques", to: "/History", icon: <MdHistory /> },
-    { label: "Livraison Clients", to: "/Map", icon: <FaLocationDot /> },
+    { label: "Livraison Clients", to: "/Map", icon: <IoLocationOutline /> },
     { label: "Messagerie", to: "/Messagerie", icon: <FaRegMessage /> },
   ];
 
