@@ -7,6 +7,12 @@ module.exports = function(sequelize, DataTypes) {// instance de sequelize io aha
       allowNull: false,
       primaryKey: true 
     },
+    CodeProduit: {
+  type: DataTypes.STRING(50),
+  allowNull: false,
+  unique: true
+},
+
     PVunitaire: {
       type: DataTypes.INTEGER,
       allowNull: true
