@@ -14,6 +14,17 @@ module.exports = function(sequelize, DataTypes) {
         model: 'client',
         key: 'IdClient'
       }
+    }, TotalHT: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    TVA: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    TotalTTC: {
+      type: DataTypes.FLOAT,
+      allowNull: true
     }
   }, {
     sequelize,
