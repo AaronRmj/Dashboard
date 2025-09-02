@@ -90,6 +90,18 @@ io.on('connection', (socket) => {
     }
   });
 
+
+//eventListeners pour les messages
+  socket.on('register', (user) => {
+    socket.user = user;
+    console.log(socket.user, socket.id);
+    console.log(`L'user ${socket.user.name} s'est connécté pour la messagerie , entreprise: ${socket.user.entreprise}; SocketId:(${socket.id})`);
+  });
+  socket.on('message', (message) => {
+    const sender = socket.user ? `User :${socket.user.name}; SocketId:(${socket.id})` : socket.id;
+    io.emit('message', `${sender} said ${message}`);
+  });
+
   socket.on('disconnect', (reason) => {
     console.log("Client déconnecté", socket.id, 'reason:', reason);
   });
@@ -114,38 +126,6 @@ db.sequelize.authenticate()
 
 //   .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
 
-
-const app = express();
-const PORT = process.env.PORT || 8080;
-const JWT_SECRET = "tonSecretJWTUltraSecurise"; 
-
-console.log("Valeur de JWT_SECRET :", JWT_SECRET);
-
-// Middlewares fonction avec execution  obtient et renvoie reponse 
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-const OptimaServer = createServer(app); // express fait ça aussi mais il te simplifie la tâche avec seulement app.listen()
-console.log("server créé");
-const io = new Server(OptimaServer, {
-    cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
-io.on('connection', (socket) => {
-    socket.on('register', (user) => {
-        socket.user = user;
-        console.log(socket.user, socket.id);
-        console.log(`L'user ${socket.user.name} s'est connécté, entreprise: ${socket.user.entreprise}; SocketId:(${socket.id})`);
-    });
-    socket.on('message', (message) => {
-      const sender = socket.user ? `User :${socket.user.name}; SocketId:(${socket.id})` : socket.id;
-      io.emit('message', `${sender} said ${message}`);
-    });
-  });
 
 
 // cree dossier uploads sinon existe 
