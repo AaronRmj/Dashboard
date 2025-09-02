@@ -15,8 +15,7 @@ import SignupPage from "./pages/auth/sign/SignupPage";
 import MotDePasseOublie from "./pages/auth/login/Mdpoublie";
 import ResetPassword from "./pages/auth/login/ResetPassword";
 import PrivateRoute from "./pages/auth/PrivateRoute";
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine';
+
 
 function App() {
   return (

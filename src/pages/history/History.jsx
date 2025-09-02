@@ -99,7 +99,7 @@ const History = () => {
                 const base = 'http://localhost:8080';
                 const [ventesRes, achatsRes] = await Promise.all([
                     fetch(base + '/Vente').then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status} ${r.statusText}`))).catch((e) => { console.warn('fetch /Vente failed', e); return []; }),
-                    fetch(base + '/Achat').then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status} ${r.statusText}`))).catch((e) => { console.warn('fetch /Achat failed', e); return []; }),
+                    fetch(base + '/histoAchat').then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status} ${r.statusText}`))).catch((e) => { console.warn('fetch /Achat failed', e); return []; }),
                 ]);
 
                 const ventes = normalize(ventesRes);

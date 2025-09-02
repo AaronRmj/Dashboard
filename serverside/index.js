@@ -7,12 +7,16 @@ const PDFDocument = require('pdfkit');
 const multer = require('multer');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 require('dotenv').config();
 const { where, Op } = require('sequelize');
  const db = require('./models/db');
 
+
 const QRCode = require('qrcode');
 const PORT = process.env.PORT || 8080;
+const JWT_SECRET = process.env.JWT_SECRET;
+console.log("Using JWT: " + JWT_SECRET);
 //importe classe server
 const { Server } = require('socket.io');
 
@@ -95,13 +99,13 @@ OptimaServer.listen(PORT, '0.0.0.0', ()=>{
 })
 
 
-// Connexion à la BD
+//Connexion à la BD
 db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
 
-// db.sequelize.sync({ alter: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+// db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
 //   .then(() => {
 //     console.log(" Synchronisation Sequelize ");
@@ -1396,6 +1400,7 @@ app.post("/Achat", upload.any(), async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
+    console.log("Erreur achat :", error);
     return res.status(500).json({ 
       error: "Une erreur est survenue lors du traitement de l'achat", 
       details: error.message 

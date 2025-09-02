@@ -1,68 +1,63 @@
-import 'leaflet-routing-machine';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 
+const Itineraire = ({ start, end }) => {
+  const map = useMap();
+  const routingControlRef = useRef(null);
 
-const Itineraire = ({start, end}) =>{
-    //recuperer l'instance de la carte
-    const map = useMap();
-    const routingControlRef = useRef(null);
-    useEffect(()=>{
-      
-        //ne rien faire si il n y a pas d arrive ni de depart
-        if(!start || !end) return; 
+  useEffect(() => {
+    if (!start || !end) return;
 
-        //est ce qu il y a deja un itineraire
-        if(routingControlRef.current){
-          //fafana lony ny tableau alon ny anavona vaovao
-          map.removeControl(routingControlRef.current)
-        }
+    // remove previous control if present
+    if (routingControlRef.current) {
+      try { map.removeControl(routingControlRef.current); } catch (e) { /* ignore */ }
+      routingControlRef.current = null;
+    }
 
-        //sinon ra mbola tsisy dia tonga dia manao
+    let mounted = true;
 
-        try{
-          //L c est l objet principale Leaflet
-          routingControlRef.current = L.Routing.control({
-          waypoints:[ //points de depart et arrivée
-              L.latLng( start.lat, start.lng),
-              L.latLng( end.lat, end.lng)
+    (async () => {
+      try {
+        // dynamic import avoids Vite CJS/ESM resolution issues
+        await import('leaflet-routing-machine/dist/leaflet-routing-machine.css');
+        await import('leaflet-routing-machine'); // attaches Routing to global L
+
+        if (!mounted) return;
+
+        routingControlRef.current = L.Routing.control({
+          waypoints: [
+            L.latLng(start.lat, start.lng),
+            L.latLng(end.lat, end.lng)
           ],
-          //modifiaction par drag
           routeWhileDragging: true,
-          lineOptions:{
-              styles:[{
-                  color: '#4285f4',
-                  weight: 5,
-                  opacity: 0.9
-              }]
+          lineOptions: {
+            styles: [{
+              color: '#4285f4',
+              weight: 5,
+              opacity: 0.9
+            }]
           },
-          //une seule route
           showAlternatives: false,
-          //points fixes
-          
-          draggableWayPoints: true,
-
-          //zoom automatique
+          draggableWaypoints: true,
           fitSelectedRoutes: true
-
-      }).addTo(map);
+        }).addTo(map);
+      } catch (error) {
+        console.error('Erreur lors de la création d\'itinéraire', error);
       }
-        catch(error){
-          console.error("Erreur lors de la création d'itinéraire", error);
-        }
+    })();
 
-      //nettoyage si le composant est detruit
-      
-      return () =>{
-        if (routingControlRef.current){
-          map.removeControl(routingControlRef.current)
-        }
-      };
-  },[map, start, end]) //ra miova reto dia recharger ny page
+    return () => {
+      mounted = false;
+      if (routingControlRef.current) {
+        try { map.removeControl(routingControlRef.current); } catch (e) { /* ignore */ }
+        routingControlRef.current = null;
+      }
+    };
+  }, [map, start, end]);
 
-      return null;
+  return null;
+};
 
-}
-export default Itineraire
+export default Itineraire;
