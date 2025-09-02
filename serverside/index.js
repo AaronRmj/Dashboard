@@ -90,6 +90,18 @@ io.on('connection', (socket) => {
     }
   });
 
+
+//eventListeners pour les messages
+  socket.on('register', (user) => {
+    socket.user = user;
+    console.log(socket.user, socket.id);
+    console.log(`L'user ${socket.user.name} s'est connécté pour la messagerie , entreprise: ${socket.user.entreprise}; SocketId:(${socket.id})`);
+  });
+  socket.on('message', (message) => {
+    const sender = socket.user ? `User :${socket.user.name}; SocketId:(${socket.id})` : socket.id;
+    io.emit('message', `${sender} said ${message}`);
+  });
+
   socket.on('disconnect', (reason) => {
     console.log("Client déconnecté", socket.id, 'reason:', reason);
   });
@@ -112,11 +124,12 @@ db.sequelize.authenticate()
 //     console.log("Modèles chargés :", Object.keys(db));
 //   })
 
-//   .catch(err => console.error(" Erreur synchronisation :", err));/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+//   .catch(err => console.error(" Erreur synchronisation :", err));*/// !!! Enlever le commentaire pour Synchroniser la BD aux Modèles
+
 
 
 // cree dossier uploads sinon existe 
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = (path.join(__dirname, 'uploads'));
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
