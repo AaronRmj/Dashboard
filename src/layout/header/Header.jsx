@@ -3,7 +3,7 @@ import { CiMenuFries } from "react-icons/ci";
 import Sidebar from "../sidebar/Sidebar";
 import { Link } from "react-router-dom";
 import UserInfo from "./UserInfo";
-import Ispm from"../../assets/images/ispm.png";
+import Ispm from"../../assets/images/logo.png";
 
 const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

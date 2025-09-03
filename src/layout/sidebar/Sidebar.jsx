@@ -7,7 +7,7 @@ import { RiTeamLine } from "react-icons/ri";
 import { CiBag1 } from "react-icons/ci";
 import { IoLocationOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from "react-router-dom";
-
+import logo from '../../assets/images/ispm.png'
 
 const Sidebar = ({ isSidebarOpen }) => {
   const navigate = useNavigate();
@@ -21,8 +21,8 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   const menuItems = [
     { label: "Tableau de bord", to: "/Dashboard", icon: <MdOutlineSpaceDashboard /> },
-    { label: "Vente de produits", to: "/Customers", icon: <IoPeopleOutline /> },
-    { label: "Achat de produits", to: "/StockSuppliers", icon: <CiBag1 /> },
+    { label: "Vente produits", to: "/Customers", icon: <IoPeopleOutline /> },
+    { label: "Achat produits", to: "/StockSuppliers", icon: <CiBag1 /> },
     { label: "Gérer stocks", to: "/ProductsStock", icon: <MdOutlineInventory /> },
     { label: "Gestion employés", to: "/EmployeeList", icon: <RiTeamLine /> },
     { label: "Pointage Employées", to: "/Todo", icon: <GrTask /> },
@@ -55,6 +55,10 @@ const Sidebar = ({ isSidebarOpen }) => {
               </button>
             );
           })}
+
+          <div>
+            <img src={logo} alt="ispm maminay" />
+          </div>
 
         </div>
 

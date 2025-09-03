@@ -453,7 +453,6 @@ const Customers = () => {
           <button onClick={genererFacture} className="bg-red-600 text-white w-full py-1 rounded">
             Facture
           </button>
-          <button className="bg-blue-700 text-white w-full py-1 rounded">Mail</button>
         </div>
       </div>
     </div>
