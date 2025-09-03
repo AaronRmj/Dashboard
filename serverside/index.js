@@ -531,7 +531,7 @@ app.post('/ajouter-employe', authMiddleware, upload.single("photo"), async (req,
     } = req.body;
 
     // Correction ici : stocker le chemin relatif pour usage React/Electron
-    const photoPath = req.file ? `uploads/${req.file.filename}` : null;
+    const photoPath = req.file ? req.file.filename: null;
 
     // Vérification des champs requis
     if (!nom || !username || !adresse || !email || !tel || !poste || !salaire || !motdepasse || !photoPath) {
@@ -1258,6 +1258,7 @@ app.post('/update-photo', upload.single('photo'), async (req, res) => {
 });
 app.post("/Achat", upload.any(), async (req, res) => {
   const transaction = await db.sequelize.transaction();
+  const { createCanvas, loadImage } = require("canvas");
 
 
   try {

@@ -84,7 +84,7 @@ const ProductsStock = () => {
                   <tr className="bg-gray-100 text-gray-700">
                     <th className="p-3">Image Produit</th>
                     <th className="p-3">Nom Produit</th>
-                    <th className="p-3">Code Barre</th>
+                    <th className="p-3">Code QR</th>
                     <th className="p-3">Prix Vente</th>
                     <th className="p-3">Stock</th>
                     <th className="p-3">Action</th>
