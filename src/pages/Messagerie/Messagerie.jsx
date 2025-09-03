@@ -10,7 +10,6 @@ const MessageBubble = ({ m }) => {
   const containerStyle = {
     display: "flex",
     justifyContent: self ? "flex-end" : "flex-start",
-    justifyContent: self ? "flex-end" : "flex-start",
     marginBottom: 8,
     alignItems: "flex-end" // garde la bulle alignée verticalement
   };
