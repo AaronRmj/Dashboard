@@ -63,7 +63,9 @@ export default function Location() {
             lng: coordinates[step].lng
           });
           step++;
-          animationRef.current = requestAnimationFrame(animate);
+          animationRef.current = setTimeout(()=> {
+            requestAnimationFrame(animate);
+          }, 2000); // contrôle la vitesse ici (100ms entre chaque point)
         } else {
           setIsDelivering(false);
           setCurrentPosition(null);
@@ -101,12 +103,10 @@ export default function Location() {
       )}
 
       {start && end && !isDelivering &&(
-        <div>
-            <Button 
-                onClick={simulate}
-                label='Simuler livraison'
-                className="w-30"
-            />
+        <div className="text-center mb-2">
+            <button onClick={simulate} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Demarrer suivi
+            </button>
         </div>
       )}
 
