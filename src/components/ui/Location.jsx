@@ -30,53 +30,51 @@ export default function Location() {
   const [isDelivering, setIsDelivering] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
   const animationRef = useRef(null);
+  const routePointsRef = useRef([]); // Pour stocker les points de l'itinéraire
 
   //demarrer la simulation de livraison
   const simulate = () => {
-
-    //tsy simulena ra tsisy depart sy arrivé
     if (!start || !end) return null;
+
+    // Récupérer l'itinéraire actuel depuis leaflet-routing-machine
+    const routingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(start.lat, start.lng),
+        L.latLng(end.lat, end.lng)
+      ]
+    });
+
+    routingControl.route();
+
+    routingControl.on('routesfound', (e) => {
+      const coordinates = e.routes[0].coordinates;
+      routePointsRef.current = coordinates;
+      
       setIsDelivering(true);
-      setCurrentPosition(start); //position initiale
+      setCurrentPosition({ lat: coordinates[0].lat, lng: coordinates[0].lng });
 
-      //manisy pts 50 entre a et b 
-      const steps = calculateSteps(start, end, 50);
-      let step = 0; 
+      let step = 0;
+      const totalSteps = coordinates.length;
 
-      function animate(){
-        if (step < steps.length){
-          setCurrentPosition(steps[step]); //deplace le marqueur a la position suivante du tab steps
+      function animate() {
+        if (step < totalSteps) {
+          setCurrentPosition({
+            lat: coordinates[step].lat,
+            lng: coordinates[step].lng
+          });
           step++;
-          animationRef.current = requestAnimationFrame(animate); 
-        }
-        else {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
           setIsDelivering(false);
-        } 
-      }
-      //recursive ilay animation
-      animationRef.current = requestAnimationFrame(animate)
-
-    }
-
-    //definir calculate steps
-    function calculateSteps(start, end, numSteps){
-
-      const steps = []; //ho fenoina ity
-
-      for (let i = 0; i <= numSteps; i++){
-
-        const ratio = i / numSteps; //pourcentage fandeany
-
-        steps.push({
-          //mitady anle lat sy lng manaraka refa anaty animation
-          lat:  start.lat + (end.lat - start.lat) * ratio,
-          lng:  start.lng + (end.lng - start.lng) * ratio,
-        })
+          setCurrentPosition(null);
+          setStart(null);
+          setEnd(null);
+        }
       }
 
-      return steps;
-   
-    }
+      animationRef.current = requestAnimationFrame(animate);
+    });
+  };
 
     useEffect(()=>{
       return () =>{
