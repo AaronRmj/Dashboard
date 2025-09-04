@@ -97,10 +97,20 @@ io.on('connection', (socket) => {
     console.log(socket.user, socket.id);
     console.log(`L'user ${socket.user.name} s'est connécté pour la messagerie , entreprise: ${socket.user.entreprise}; SocketId:(${socket.id})`);
   });
-  socket.on('message', (message) => {
-    const sender = socket.user ? `User :${socket.user.name}; SocketId:(${socket.id})` : socket.id;
-    io.emit('message', `${sender} said ${message}`);
-  });
+socket.on('message', (message) => {
+  const messageData = {
+    text: message,
+    sender: socket.user ? socket.user.name : 'Anonyme',
+    userId: socket.user ? socket.user.name : null,   // <-- utiliser le name
+    photo: socket.user ? socket.user.photoUrl : null,
+    entreprise: socket.user ? socket.user.entreprise : null,
+    timestamp: new Date().toISOString(),
+    socketId: socket.id
+  };
+  
+  io.emit('message', messageData);
+});
+
 
   socket.on('disconnect', (reason) => {
     console.log("Client déconnecté", socket.id, 'reason:', reason);
@@ -116,8 +126,7 @@ db.sequelize.authenticate()
   .then(() => console.log(" Connecté à la BD "))
   .catch(err => console.error(" Erreur connexion BD :", err));
 
-
-// db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
+  db.sequelize.sync({ force: true }) // {alter : true} si tu veux rajouter une colonne; sans arguments si tu veux juste qu'il détecte qu'il devrait créer une nouvelle table
 
 //   .then(() => {
 //     console.log(" Synchronisation Sequelize ");
